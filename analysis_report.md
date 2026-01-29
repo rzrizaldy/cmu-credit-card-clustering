@@ -225,7 +225,27 @@
 
 ---
 
-### 3.5 Marketing Initiatives
+
+### 3.5 Card Upgrade Strategy
+
+> **📊 VIZ 16: Segment × Card Distribution (Stacked Bar)**
+> Shows card tier mix within each behavioral segment
+
+> **📊 VIZ 17: Upgrade Opportunity Map (Bubble Chart)**
+> X = Segment, Y = Card Tier, Size = Count, Color = Utilization
+> Low utilization + high count = upgrade opportunity
+
+**Upgrade Path Recommendations:**
+
+| Current State | Target | Priority | Rationale |
+|---------------|--------|----------|-----------|
+| Transactors × Blue | Silver | High | Proven spend, reward engagement |
+| Transactors × Silver | Gold | Medium | Loyalty recognition |
+| Premium Engaged × Gold | Platinum | Medium | Upsell premium benefits |
+| Dormant × Blue | Silver | Low | Only post re-activation |
+| Credit Dependent × Any | Hold | — | Monitor risk first |
+
+### 3.6 Marketing Initiatives
 
 | Segment | Initiative | Channel | Offer |
 |---------|------------|---------|-------|
@@ -235,7 +255,7 @@
 | Dormant (Premium) | Retention | Phone | Dedicated concierge, bonus points |
 | Credit Dependent | Risk Management | App | Budgeting tools, alerts |
 
-### 3.6 Product Improvements
+### 3.7 Product Improvements
 
 | Segment | Product Enhancement |
 |---------|---------------------|
@@ -265,6 +285,8 @@
 | 13 | Card Mix Bar | Q3 - Recommendations |
 | 14 | Behavioral × RFM | Q3 - Recommendations |
 | 15 | Targeting Priority | Q3 - Recommendations |
+| 16 | Segment × Card Stacked | Q3 - Upgrade strategy |
+| 17 | Upgrade Opportunity Map | Q3 - Upgrade strategy |
 
 ---
 
