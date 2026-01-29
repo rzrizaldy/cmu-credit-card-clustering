@@ -1,153 +1,193 @@
-# Transactional Data EDA - Detailed Analysis
-**Author:** Rizaldy
-**Business Objective:** Increase Utilization Rate to drive sales volume and revenue
+# Credit Card Customer Segmentation
+**Rizaldy | CMU Applied ML**
+
+Business Goal: Increase utilization rate to drive revenue
 
 ---
 
-## Transactional Features Overview
+## EDA: Transactional Features
 
-| Feature | Description |
-|---------|-------------|
-| Credit_Limit | Maximum credit available to customer |
-| Total_Revolving_Bal | Balance carried over from month to month |
-| Avg_Open_To_Buy | Available credit (Credit_Limit - Total_Revolving_Bal) |
-| Total_Amt_Chng_Q4_Q1 | Change in transaction amount (Q4 vs Q1) |
-| Total_Trans_Amt | Total transaction amount in last 12 months |
-| Total_Trans_Ct | Total transaction count in last 12 months |
-| Total_Ct_Chng_Q4_Q1 | Change in transaction count (Q4 vs Q1) |
-| Avg_Utilization_Ratio | Credit utilization (Total_Revolving_Bal / Credit_Limit) |
+### Features Overview
 
----
+| Feature | What it means |
+|---------|---------------|
+| Credit_Limit | Max credit available |
+| Total_Revolving_Bal | Balance carried month to month |
+| Avg_Open_To_Buy | Available credit (Limit - Revolving) |
+| Total_Trans_Amt | Total transaction amount (12 months) |
+| Total_Trans_Ct | Total transaction count (12 months) |
+| Total_Amt_Chng_Q4_Q1 | Change in amount Q4 vs Q1 |
+| Total_Ct_Chng_Q4_Q1 | Change in count Q4 vs Q1 |
+| Avg_Utilization_Ratio | Revolving / Limit |
 
-## 1. Descriptive Statistics
+### Distribution Findings
 
-**Justification:** Understanding the central tendency, spread, and distribution of transactional features helps identify potential outliers and data quality issues before clustering. This is essential for the business goal of identifying under-utilized customer segments.
+1. **Credit_Limit & Avg_Open_To_Buy**: Right-skewed, most customers have lower limits. Few premium customers.
 
-**Key Metrics Explanation:**
-- **CV (Coefficient of Variation):** Higher CV indicates more variability relative to mean
-- **Skewness:** >0 right-skewed, <0 left-skewed; |skew| > 1 indicates significant skew
-- **IQR:** Interquartile range shows spread of middle 50% of data
+2. **Total_Revolving_Bal**: Bimodal (peaks at 0 and ~1500). Two groups: pay full balance vs carry debt.
 
----
+3. **Avg_Utilization_Ratio**: Right-skewed, many at 0. Lots of under-utilized customers, thats our target.
 
-## 2. Distribution Analysis
+4. **Total_Trans_Amt & Total_Trans_Ct**: Good variation, useful for differentiating engagement levels.
 
-**Justification:** Visualizing distributions helps understand customer spending patterns and identify segments. Skewed distributions indicate presence of different customer groups (e.g., high spenders vs low spenders) - key for clustering strategy.
+### Utilization Segments
 
-**Interpretation:**
+| Segment | Threshold | Action |
+|---------|-----------|--------|
+| Low | ≤30% | TARGET, increase engagement |
+| Medium | 30-70% | Nurture, maintain |
+| High | >70% | Monitor, risk of overleveraging |
 
-1. **Credit_Limit & Avg_Open_To_Buy:** Right-skewed, most customers have lower limits
-   - Indicates majority are standard card holders, few premium customers
+Most customers fall in low utilization. Primary targets for campaigns.
 
-2. **Total_Revolving_Bal:** Bimodal distribution (peaks at 0 and ~1500)
-   - Two distinct groups: those who pay full balance vs those who carry debt
+### Correlation Check
 
-3. **Avg_Utilization_Ratio:** Right-skewed with many at 0
-   - Many customers under-utilize their credit (TARGET FOR BUSINESS OBJECTIVE)
+- Credit_Limit vs Avg_Open_To_Buy: 0.99 correlation, basically same info. Keep only Credit_Limit.
+- Total_Trans_Amt vs Total_Trans_Ct: High correlation but measure different things (amount vs frequency), keep both.
 
-4. **Total_Trans_Amt & Total_Trans_Ct:** Show variation in transaction behavior
-   - Good features for differentiating customer engagement levels
-
----
-
-## 3. Outlier Analysis
-
-**Justification:** Boxplots reveal outliers and data spread. For clustering, understanding outliers is crucial as they can skew cluster centroids. This helps decide if data transformation or outlier treatment is needed.
-
-**Recommendation:** Features with high outlier % may need transformation (log, sqrt) before clustering to prevent outliers from dominating cluster formation.
-
----
-
-## 4. Utilization Ratio Deep Dive (KEY BUSINESS METRIC)
-
-**Justification:** Avg_Utilization_Ratio is the PRIMARY BUSINESS METRIC. Understanding its distribution and segments is critical for targeting under-utilized customers to increase revenue.
-
-**Segment Definitions:**
-| Segment | Threshold | Business Action |
-|---------|-----------|-----------------|
-| Low Utilization | ≤30% | TARGET - Increase engagement |
-| Medium Utilization | 30-70% | NURTURE - Maintain/grow |
-| High Utilization | >70% | MONITOR - Risk of overleveraging |
-
-**Key Insight:**
-- Majority of customers have LOW utilization (≤30%)
-- These are the PRIMARY TARGETS for marketing campaigns
-- Strategy: Offer rewards, cashback, or promotional rates to increase usage
-- Clustering will help identify WHICH low-utilization segments to target first
-
----
-
-## 5. Correlation Analysis
-
-**Justification:** Understanding correlations helps identify redundant features and potential multicollinearity issues. For clustering, we want features that capture different aspects of customer behavior, not duplicate information.
-
-**High Positive Correlations (potential redundancy):**
-
-1. **Credit_Limit ↔ Avg_Open_To_Buy:** Very high correlation (~0.99)
-   - RECOMMENDATION: Use only ONE of these features (prefer Credit_Limit as base metric)
-
-2. **Total_Trans_Amt ↔ Total_Trans_Ct:** High correlation
-   - Both capture transaction activity; consider keeping both as they measure different aspects (amount vs frequency)
-
----
-
-## 6. Transaction Behavior Analysis
-
-**Justification:** Transaction amount and count together reveal spending patterns. This helps identify different customer types: high frequency low value vs low frequency high value customers - critical for targeted marketing.
-
-**Quadrant Interpretation:**
+### Transaction Behavior Quadrants
 
 | Quadrant | Description | Strategy |
 |----------|-------------|----------|
-| High Amt / High Ct | Power users - high value, frequent transactions | Best customers, offer loyalty rewards to retain |
-| High Amt / Low Ct | Big spenders - high value, infrequent | Opportunity to increase transaction frequency |
-| Low Amt / High Ct | Frequent users - low value, many transactions | Opportunity to increase transaction value (upsell) |
-| Low Amt / Low Ct | Low engagement - under-utilized segment | PRIMARY TARGET for increasing utilization rate |
+| High Amt / High Ct | Power users | Loyalty rewards, retain |
+| High Amt / Low Ct | Big spenders, infrequent | Increase frequency |
+| Low Amt / High Ct | Frequent, low value | Upsell opportunity |
+| Low Amt / Low Ct | Under-utilized | PRIMARY TARGET |
 
 ---
 
-## 7. Feature Selection Summary
+## Preprocessing
 
-**Selection Criteria:**
-1. Relevant to business objective (increasing utilization)
-2. Good variability (can differentiate customer segments)
-3. Not highly correlated with each other (avoid redundancy)
-4. Can be meaningfully interpreted for business actions
+### Feature Selection
 
-### Recommended Features for Clustering
+**Included (15 features):**
+- Transactional: Credit_Limit, Total_Revolving_Bal, Total_Trans_Amt, Total_Trans_Ct, Avg_Utilization_Ratio
+- Behavioral: Total_Amt_Chng_Q4_Q1, Total_Ct_Chng_Q4_Q1
+- Demographic: Customer_Age, Dependent_count, Gender, Education_Level, Marital_Status, Income_Category
+- Engineered: avg_transaction_value, contact_inactivity_ratio
 
-**PRIMARY FEATURES (5 features):**
-1. `Credit_Limit` - Capacity metric
-2. `Total_Revolving_Bal` - Debt behavior
-3. `Total_Trans_Amt` - Transaction volume
-4. `Total_Trans_Ct` - Transaction frequency
-5. `Avg_Utilization_Ratio` - KEY BUSINESS METRIC
+**Excluded:**
+- Avg_Open_To_Buy: Redundant with Credit_Limit
+- CLIENTNUM: Just an ID
 
-**OPTIONAL FEATURES:**
-- `Total_Amt_Chng_Q4_Q1` - if trend analysis is needed
-- `Total_Ct_Chng_Q4_Q1` - if activity trend is important
+### Preprocessing Steps
 
-**EXCLUDED:**
-- `Avg_Open_To_Buy` - Highly correlated with Credit_Limit (redundant)
-- `CLIENTNUM` - Just an identifier
+1. StandardScaler for all numerical features (different scales)
+2. LabelEncoder for categoricals (Gender, Education, Marital, Income)
+3. No outlier removal, kept full dataset
 
 ---
 
-## Preprocessing Recommendations
+## Q1: K-Means Clustering
 
-1. **STANDARDIZATION:** Use StandardScaler for all features (different scales)
-2. **OUTLIER HANDLING:** Consider log transformation for:
-   - Credit_Limit (right-skewed)
-   - Total_Trans_Amt (right-skewed)
-3. **NO ENCODING NEEDED:** All selected features are numerical
+### Feature Selection
+
+We picked 15 features after some trial and error. Dropped Avg_Open_To_Buy because it has 0.99 correlation with Credit_Limit.
+
+First iteration with only transactional features gave 3 clusters. After adding demographics, we got 4 clusters that made more business sense.
+
+### Optimal K
+
+Used two methods:
+1. **Elbow method**: Plotted SSE vs k, elbow at k=4
+2. **Silhouette score**: k=4 scored ~0.18, better than k=3 or k=5
+
+Both pointed to 4 clusters. When we added more features, the optimal k shifted from 3 to 4.
+
+### Cluster Profiles
+
+| Cluster | Name | Util | Trans Amt | Dependents |
+|---------|------|------|-----------|------------|
+| 0 | Family Savers | 12% | $3,800 | 2.1 |
+| 1 | Credit Dependent | 68% | $4,200 | 1.8 |
+| 2 | Big Spenders | 35% | $5,500 | 1.5 |
+| 3 | Mature Dormant | 8% | $2,900 | 0.8 |
+
+Main differentiator is utilization ratio (8% to 68% range). Family Savers have kids but low usage, thats our target segment.
 
 ---
 
-## Next Steps for Clustering
+## Q2: Hierarchical vs HDBSCAN
 
-1. Combine transactional features with Life Stage features (Diyouva's EDA)
-2. Apply StandardScaler to normalize all features
-3. Use multiple clustering algorithms (K-Means, Hierarchical, DBSCAN)
-4. Evaluate clusters using Silhouette Score and business interpretability
-5. Profile clusters to identify under-utilized segments
-6. Design targeted marketing strategies for each cluster
+### Hierarchical Clustering
+
+Used Ward linkage, cut dendrogram at 4 clusters. Results similar to K-Means with silhouette 0.14.
+
+Challenges:
+- Slow on 10k rows
+- Dendrogram messy at scale
+- Memory heavy
+
+### HDBSCAN
+
+Regular DBSCAN failed because 15 features is too high dimensional. Distance metrics dont work well.
+
+Fix: PCA to 5 dims first, then HDBSCAN.
+
+| | K-Means | HDBSCAN |
+|--|---------|---------|
+| Outliers | Forced into cluster | Labeled noise |
+| K required | Yes | No |
+| Interpretability | Easy | Harder |
+
+HDBSCAN gave 5-10% noise points. Good for anomaly detection but not for marketing segments.
+
+### Which is best?
+
+K-Means for our use case. Clean segments, easy to explain, fast. Hierarchical similar quality but slower. HDBSCAN useful for validation only.
+
+---
+
+## Q3: Recommendations
+
+### Best Model: K-Means (k=4)
+
+### Cluster Descriptions
+
+**Family Savers** (TARGET)
+- Low util 12%, has 2+ kids
+- Have credit but dont use it
+- Biggest growth opportunity
+
+**Credit Dependent**
+- High util 68%, carries balance
+- Revenue driver but risky
+
+**Big Spenders**
+- High transaction volume, pays regularly
+- Already valuable, focus retention
+
+**Mature Dormant**
+- Older, no kids, barely uses card
+- Hard to activate
+
+### Marketing Strategy
+
+**Family Savers** (Priority 1):
+- Groceries cashback
+- School fee installment
+- Family dining rewards
+
+**Mature Dormant** (Priority 2):
+- Travel rewards
+- Healthcare discounts
+
+**Big Spenders** (Retention):
+- Premium card upgrade
+- Lounge access
+
+**Credit Dependent** (Risk):
+- Balance transfer offers
+- Monitor for default signs
+
+### Expected Impact
+
+If Family Savers utilization goes from 12% to 25%, thats roughly 2x revenue from that segment.
+
+---
+
+## Technical Notes
+
+- StandardScaler for all features
+- LabelEncoder for categoricals
+- Silhouette: K-Means 0.18, Hierarchical 0.14, HDBSCAN 0.21 (excl noise)
