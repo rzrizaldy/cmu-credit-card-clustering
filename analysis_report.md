@@ -1,6 +1,6 @@
 # Credit Card Customer Segmentation Analysis
 
-**CMU Applied ML — Group 10**
+**CMU Applied ML - Group 10**
 **Rizaldy, Diyouva, Utami**
 
 ---
@@ -87,7 +87,7 @@
 **Key Differences:**
 - **Whale** vs **Dolphin**: Similar spending, but Whale carries balances (revenue)
 - **Shark** vs **Barnacle**: Both low spend, but Shark uses credit line
-- **Dolphin**: High capacity, pay-in-full behavior — conversion opportunity
+- **Dolphin**: High capacity, pay-in-full behavior - conversion opportunity
 
 > **📊 VIZ 6: 2×2 Scatter Plot**
 > Spend vs Utilization with quadrant labels and cluster colors
@@ -116,7 +116,7 @@
 | Metric | K-Means | Hierarchical |
 |--------|---------|--------------|
 | Silhouette | ~0.35 | ~0.33 |
-| Adjusted Rand Index | — | 0.75+ (vs K-Means) |
+| Adjusted Rand Index | - | 0.75+ (vs K-Means) |
 
 **Interpretation:** High ARI indicates strong agreement between methods, validating K-Means results.
 
@@ -134,7 +134,7 @@
 | No centroids | Harder to interpret "typical" customer | Used K-Means for final profiling |
 | Hierarchical structure | Reveals sub-segments | Useful for future deep-dives |
 
-**Decision:** K-Means selected as primary method — comparable performance, interpretable centroids, faster execution.
+**Decision:** K-Means selected as primary method - comparable performance, interpretable centroids, faster execution.
 
 ---
 
@@ -157,7 +157,7 @@
 #### 🐬 Dolphin (Conversion Opportunity)
 - **Profile:** High spend, low utilization, pays in full
 - **Demographics:** Established professionals, higher income
-- **Value:** Interchange fees only — significant conversion opportunity
+- **Value:** Interchange fees only - significant conversion opportunity
 - **Opportunity:** Convert to revolving behavior
 
 #### 🦪 Barnacle (Re-activation Target)
@@ -175,9 +175,9 @@
 
 | Segment | Dominant Card | Utilization | Opportunity |
 |---------|---------------|-------------|-------------|
-| Dolphin | Blue/Silver | 15-20% | High — upgrade + intro APR |
-| Barnacle | Blue | 10-15% | High — re-activation |
-| Barnacle | Gold/Platinum | 12-18% | Medium — retention risk |
+| Dolphin | Blue/Silver | 15-20% | High - upgrade + intro APR |
+| Barnacle | Blue | 10-15% | High - re-activation |
+| Barnacle | Gold/Platinum | 12-18% | Medium - retention risk |
 
 > **📊 VIZ 12: Utilization Heatmap (Segment × Card)**
 > Shows where utilization gaps exist by product
@@ -273,7 +273,7 @@
 | Dolphin × Silver | Gold | Medium | Loyalty recognition |
 | Whale × Gold | Platinum | Medium | Upsell premium benefits |
 | Barnacle × Blue | Silver | Low | Only post re-activation |
-| Shark × Any | Hold | — | Monitor risk first |
+| Shark × Any | Hold | - | Monitor risk first |
 
 ### 3.6 Marketing Initiatives
 
