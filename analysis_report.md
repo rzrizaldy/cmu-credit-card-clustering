@@ -11,7 +11,7 @@
 
 **Approach:** K-Means clustering on behavioral features, validated with Hierarchical clustering, enhanced with RFM scoring and Card Category analysis.
 
-**Key Finding:** Four distinct behavioral segments identified. "Transactors" and "Dormant" segments (~50% of customer base) represent primary growth opportunity, particularly Blue/Silver cardholders with low utilization but demonstrated spending capacity.
+**Key Finding:** Four distinct behavioral segments identified. "Dolphin" and "Barnacle" segments (~50% of customer base) represent primary growth opportunity, particularly Blue/Silver cardholders with low utilization but demonstrated spending capacity.
 
 ---
 
@@ -72,22 +72,22 @@
 
 |  | High Spend | Low Spend |
 |--|------------|-----------|
-| **High Utilization** | Premium Engaged | Credit Dependent |
-| **Low Utilization** | Transactors | Dormant |
+| **High Utilization** | 🐋 Whale | 🦈 Shark |
+| **Low Utilization** | 🐬 Dolphin | 🦪 Barnacle |
 
 **Cluster Profiles:**
 
 | Segment | Size | Avg Spend | Avg Trans | Utilization | Revolving Bal |
 |---------|------|-----------|-----------|-------------|---------------|
-| Premium Engaged | ~20% | High | High | High | High |
-| Credit Dependent | ~15% | Low | Low | High | High |
-| Transactors | ~25% | High | High | Low | Low |
-| Dormant | ~40% | Low | Low | Low | Low |
+| Whale | ~20% | High | High | High | High |
+| Shark | ~15% | Low | Low | High | High |
+| Dolphin | ~25% | High | High | Low | Low |
+| Barnacle | ~40% | Low | Low | Low | Low |
 
 **Key Differences:**
-- **Premium Engaged** vs **Transactors**: Similar spending, but Premium Engaged carries balances (revenue)
-- **Credit Dependent** vs **Dormant**: Both low spend, but Credit Dependent uses credit line
-- **Transactors**: High capacity, pay-in-full behavior — conversion opportunity
+- **Whale** vs **Dolphin**: Similar spending, but Whale carries balances (revenue)
+- **Shark** vs **Barnacle**: Both low spend, but Shark uses credit line
+- **Dolphin**: High capacity, pay-in-full behavior — conversion opportunity
 
 > **📊 VIZ 6: 2×2 Scatter Plot**
 > Spend vs Utilization with quadrant labels and cluster colors
@@ -142,25 +142,25 @@
 
 ### 3.1 Segment Descriptions
 
-#### Premium Engaged ("Power Users")
+#### 🐋 Whale (Revenue Drivers)
 - **Profile:** High spend, high utilization, carries revolving balance
 - **Demographics:** Established families, higher income
 - **Value:** Highest revenue customers (interest + interchange)
 - **Risk:** Monitor for over-extension
 
-#### Credit Dependent ("Revolvers")
+#### 🦈 Shark (Credit Reliant)
 - **Profile:** Lower spend, but high utilization
 - **Demographics:** Mixed, some financial stress indicators
 - **Value:** Interest revenue
 - **Risk:** Default risk, requires monitoring
 
-#### Transactors ("Cash Preferred")
+#### 🐬 Dolphin (Conversion Opportunity)
 - **Profile:** High spend, low utilization, pays in full
 - **Demographics:** Established professionals, higher income
 - **Value:** Interchange fees only — significant conversion opportunity
 - **Opportunity:** Convert to revolving behavior
 
-#### Dormant ("Disengaged")
+#### 🦪 Barnacle (Re-activation Target)
 - **Profile:** Low engagement across all metrics
 - **Demographics:** Skews younger, entry-level cards
 - **Value:** Currently low
@@ -175,9 +175,9 @@
 
 | Segment | Dominant Card | Utilization | Opportunity |
 |---------|---------------|-------------|-------------|
-| Transactors | Blue/Silver | 15-20% | High — upgrade + intro APR |
-| Dormant | Blue | 10-15% | High — re-activation |
-| Dormant | Gold/Platinum | 12-18% | Medium — retention risk |
+| Dolphin | Blue/Silver | 15-20% | High — upgrade + intro APR |
+| Barnacle | Blue | 10-15% | High — re-activation |
+| Barnacle | Gold/Platinum | 12-18% | Medium — retention risk |
 
 > **📊 VIZ 12: Utilization Heatmap (Segment × Card)**
 > Shows where utilization gaps exist by product
@@ -194,14 +194,14 @@
 - F (Frequency): Transaction count
 - M (Monetary): Transaction amount
 
-| RFM Segment | Score | % of Transactors | % of Dormant |
-|-------------|-------|------------------|--------------|
+| RFM Segment | Score | % of Dolphin | % of Barnacle |
+|-------------|-------|--------------|---------------|
 | Champions | 12-15 | High | Low |
 | Loyal | 9-11 | Medium | Low |
 | Potential | 6-8 | Low | Medium |
 | At Risk | 3-5 | Low | High |
 
-**Insight:** Transactors skew Champions/Loyal (engaged but not using credit). Dormant skews At Risk (disengaged).
+**Insight:** Dolphin skews Champions/Loyal (engaged but not using credit). Barnacle skews At Risk (disengaged).
 
 > **📊 VIZ 14: Behavioral × RFM Cross-tab**
 > Heatmap showing RFM distribution within each behavioral segment
@@ -214,11 +214,11 @@
 
 | Priority | Segment × Card | Opportunity | Recommended Action |
 |----------|----------------|-------------|-------------------|
-| 1 | Transactors × Blue | High | Intro APR + Silver upgrade |
-| 2 | Transactors × Silver | High | Gold upgrade path |
-| 3 | Dormant × Blue | Medium | Cashback re-activation |
-| 4 | Dormant × Gold/Platinum | Medium | Personalized retention |
-| 5 | Credit Dependent × All | Monitor | Balance tools, risk alerts |
+| 1 | Dolphin × Blue | High | Intro APR + Silver upgrade |
+| 2 | Dolphin × Silver | High | Gold upgrade path |
+| 3 | Barnacle × Blue | Medium | Cashback re-activation |
+| 4 | Barnacle × Gold/Platinum | Medium | Personalized retention |
+| 5 | Shark × All | Monitor | Balance tools, risk alerts |
 
 > **📊 VIZ 15: Targeting Priority Bar Chart**
 > Opportunity score by Segment × Card combination
@@ -235,34 +235,64 @@
 > X = Segment, Y = Card Tier, Size = Count, Color = Utilization
 > Low utilization + high count = upgrade opportunity
 
-**Upgrade Path Recommendations:**
+**Upgrade Logic (Segment-Driven):**
+
+| Segment | Action | Rationale |
+|---------|--------|-----------|
+| 🐋 Whale | Upgrade +1 tier | High value, proven engagement |
+| 🐬 Dolphin | Upgrade +1 tier | Convert to revolving via better rewards |
+| 🦪 Barnacle | Hold | Re-activate first before upgrade |
+| 🦈 Shark | Hold | Monitor credit risk |
+
+**Upgrade Path:**
+- Blue → Silver
+- Silver → Gold
+- Gold → Platinum
+- Platinum → Platinum (max tier)
+
+> **📊 VIZ 18: Current vs Recommended Card Distribution**
+> Side-by-side bar chart showing card tier shift after applying upgrade logic
+
+> **📊 VIZ 19: Upgrade Volume by Segment × Current Card**
+> Bar chart showing number of customers eligible for upgrade by segment and current card tier
+
+> **📊 VIZ 20: PCA Scatter - Recommended Card Coloring**
+> Side-by-side PCA scatter plots: Current vs Recommended card tier coloring, showing upgrade impact in cluster space
+
+> **📊 VIZ 21: Card Mix by Segment (Post-Upgrade)**
+> Stacked bar chart showing new card tier proportions within each segment after applying upgrade logic
+
+> **📊 VIZ 22: Sankey - Card Tier Movement**
+> Flow diagram showing customer movement from Current Card → Recommended Card tier
+
+**Upgrade Summary:**
 
 | Current State | Target | Priority | Rationale |
 |---------------|--------|----------|-----------|
-| Transactors × Blue | Silver | High | Proven spend, reward engagement |
-| Transactors × Silver | Gold | Medium | Loyalty recognition |
-| Premium Engaged × Gold | Platinum | Medium | Upsell premium benefits |
-| Dormant × Blue | Silver | Low | Only post re-activation |
-| Credit Dependent × Any | Hold | — | Monitor risk first |
+| Dolphin × Blue | Silver | High | Proven spend, reward engagement |
+| Dolphin × Silver | Gold | Medium | Loyalty recognition |
+| Whale × Gold | Platinum | Medium | Upsell premium benefits |
+| Barnacle × Blue | Silver | Low | Only post re-activation |
+| Shark × Any | Hold | — | Monitor risk first |
 
 ### 3.6 Marketing Initiatives
 
 | Segment | Initiative | Channel | Offer |
 |---------|------------|---------|-------|
-| Transactors | Conversion Campaign | Email + App | 0% intro APR 12 months |
-| Transactors | Upgrade Path | Direct Mail | Waived annual fee on upgrade |
-| Dormant (Blue) | Re-activation | Digital + SMS | 5% cashback first 3 months |
-| Dormant (Premium) | Retention | Phone | Dedicated concierge, bonus points |
-| Credit Dependent | Risk Management | App | Budgeting tools, alerts |
+| Dolphin | Conversion Campaign | Email + App | 0% intro APR 12 months |
+| Dolphin | Upgrade Path | Direct Mail | Waived annual fee on upgrade |
+| Barnacle (Blue) | Re-activation | Digital + SMS | 5% cashback first 3 months |
+| Barnacle (Premium) | Retention | Phone | Dedicated concierge, bonus points |
+| Shark | Risk Management | App | Budgeting tools, alerts |
 
 ### 3.7 Product Improvements
 
 | Segment | Product Enhancement |
 |---------|---------------------|
-| Transactors | BNPL integration, installment options |
-| Dormant | Simplified rewards, lower complexity |
-| Credit Dependent | Balance transfer products, hardship programs |
-| Premium Engaged | Premium perks, exclusive access |
+| Dolphin | BNPL integration, installment options |
+| Barnacle | Simplified rewards, lower complexity |
+| Shark | Balance transfer products, hardship programs |
+| Whale | Premium perks, exclusive access |
 
 ---
 
@@ -287,14 +317,19 @@
 | 15 | Targeting Priority | Q3 - Recommendations |
 | 16 | Segment × Card Stacked | Q3 - Upgrade strategy |
 | 17 | Upgrade Opportunity Map | Q3 - Upgrade strategy |
+| 18 | Current vs Recommended Card | Q3 - Upgrade strategy |
+| 19 | Upgrade Volume by Segment | Q3 - Upgrade strategy |
+| 20 | PCA Scatter - Recommended Card | Q3 - Upgrade strategy |
+| 21 | Card Mix by Segment (Post-Upgrade) | Q3 - Upgrade strategy |
+| 22 | Sankey - Card Tier Movement | Q3 - Upgrade strategy |
 
 ---
 
 ## Next Steps
 
 1. Stakeholder validation of segment definitions
-2. A/B test priority campaigns (Transactors conversion)
-3. Implement risk monitoring for Credit Dependent
+2. A/B test priority campaigns (Dolphin conversion)
+3. Implement risk monitoring for Shark
 4. Track KPIs: utilization lift, activation rate, churn
 5. Quarterly model refresh
 
