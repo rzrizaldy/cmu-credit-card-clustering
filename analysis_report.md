@@ -1,100 +1,281 @@
-# Credit Card Customer Segmentation
+# Credit Card Customer Segmentation Analysis
 
 **CMU Applied ML — Group 10**
+**Rizaldy, Diyouva, Utami**
 
 ---
 
 ## Executive Summary
 
-**Objective:** Increase credit utilization.
+**Objective:** Identify customer segments to increase credit card utilization.
 
-**Approach:** Behavioral clustering → RFM scoring → Card Category analysis → Targeting
+**Approach:** K-Means clustering on behavioral features, validated with Hierarchical clustering, enhanced with RFM scoring and Card Category analysis.
 
-**Key Finding:** Transactors and Dormant segments (~50% of base) with Blue/Silver cards show highest opportunity score when weighted by RFM engagement.
-
----
-
-## 1. Methodology
-
-### Features (4)
-| Feature | RFM Mapping |
-|---------|-------------|
-| Total_Trans_Amt | Monetary |
-| Total_Trans_Ct | Frequency |
-| Months_Inactive | Recency (inverse) |
-| Avg_Utilization_Ratio | Utilization |
-
-### Clustering
-K-Means (k=4) validated by Hierarchical + HDBSCAN
+**Key Finding:** Four distinct behavioral segments identified. "Transactors" and "Dormant" segments (~50% of customer base) represent primary growth opportunity, particularly Blue/Silver cardholders with low utilization but demonstrated spending capacity.
 
 ---
 
-## 2. Behavioral Segmentation
+## Question 1: K-Means Clustering
+
+### 1.1 Feature Selection
+
+**Hypothesis:** Customers can be segmented by spending and credit usage behavior. Under-utilized segments can be targeted for growth.
+
+**Feature Selection Process:**
+
+| Step | Method | Outcome |
+|------|--------|---------|
+| Correlation Analysis | Identify multicollinearity | Dropped `Credit_Limit` (derived from Util × Balance) |
+| PCA | Variance contribution | Spending + Utilization drive PC1/PC2 |
+| Silhouette Testing | Optimal feature set | 4 features yield best separation |
+
+**Final Features (4):**
+
+| Feature | Business Meaning |
+|---------|------------------|
+| `Total_Trans_Amt` | Spending volume |
+| `Total_Trans_Ct` | Transaction frequency |
+| `Avg_Utilization_Ratio` | Credit line usage |
+| `Total_Revolving_Bal` | Balance carried |
+
+> **📊 VIZ 1: Correlation Matrix Heatmap**
+> Shows feature relationships and justifies dropping Credit_Limit
+
+> **📊 VIZ 2: PCA Variance Explained**
+> Cumulative variance plot showing 2 components capture majority of variance
+
+> **📊 VIZ 3: Silhouette Score by Feature Set**
+> Bar chart comparing silhouette scores across feature combinations
+
+---
+
+### 1.2 Optimal Cluster Size
+
+**Methods Used:**
+
+| Method | Optimal k | Rationale |
+|--------|-----------|-----------|
+| Elbow Method | 4 | Clear inflection point in inertia curve |
+| Silhouette Analysis | 4 | Highest average silhouette score |
+
+> **📊 VIZ 4: Elbow Plot**
+> Inertia vs k with elbow at k=4 marked
+
+> **📊 VIZ 5: Silhouette Score vs k**
+> Line plot showing silhouette peaks at k=4
+
+---
+
+### 1.3 Cluster Exploration
+
+**Behavioral Segmentation (2×2 Framework):**
 
 |  | High Spend | Low Spend |
 |--|------------|-----------|
-| **High Util** | Premium Engaged | Credit Dependent |
-| **Low Util** | Transactors | Dormant |
+| **High Utilization** | Premium Engaged | Credit Dependent |
+| **Low Utilization** | Transactors | Dormant |
+
+**Cluster Profiles:**
+
+| Segment | Size | Avg Spend | Avg Trans | Utilization | Revolving Bal |
+|---------|------|-----------|-----------|-------------|---------------|
+| Premium Engaged | ~20% | High | High | High | High |
+| Credit Dependent | ~15% | Low | Low | High | High |
+| Transactors | ~25% | High | High | Low | Low |
+| Dormant | ~40% | Low | Low | Low | Low |
+
+**Key Differences:**
+- **Premium Engaged** vs **Transactors**: Similar spending, but Premium Engaged carries balances (revenue)
+- **Credit Dependent** vs **Dormant**: Both low spend, but Credit Dependent uses credit line
+- **Transactors**: High capacity, pay-in-full behavior — conversion opportunity
+
+> **📊 VIZ 6: 2×2 Scatter Plot**
+> Spend vs Utilization with quadrant labels and cluster colors
+
+> **📊 VIZ 7: Cluster Boxplots**
+> 4-panel boxplot showing each feature distribution by cluster
+
+> **📊 VIZ 8: PCA Cluster Visualization**
+> 2D scatter of PC1 vs PC2 with cluster centroids marked
 
 ---
 
-## 3. RFM Analysis
+## Question 2: Alternative Clustering (Hierarchical)
 
-**Scoring:** R + F + M (each 1-5 quintile)
+### 2.1 Method Selection
 
-| RFM Segment | Score | Profile |
-|-------------|-------|---------|
-| Champions | 12-15 | Best customers |
-| Loyal | 9-11 | Consistent engagement |
-| Potential | 6-8 | Room to grow |
-| At Risk | 3-5 | Disengaged |
+**Chosen:** Hierarchical Clustering (Ward linkage)
 
-### Behavioral × RFM Cross-tab
+**Why Hierarchical over DBSCAN:**
+- Dendrogram provides visual validation of cluster count
+- Ward linkage minimizes within-cluster variance (similar objective to K-Means)
+- DBSCAN challenged by uniform density in behavioral data
 
-Identifies which behavioral segments have high-value (Champions/Loyal) vs at-risk customers.
+### 2.2 Results
 
----
+| Metric | K-Means | Hierarchical |
+|--------|---------|--------------|
+| Silhouette | ~0.35 | ~0.33 |
+| Adjusted Rand Index | — | 0.75+ (vs K-Means) |
 
-## 4. Card Category × Segment
+**Interpretation:** High ARI indicates strong agreement between methods, validating K-Means results.
 
-| Segment | Card | Utilization | Insight |
-|---------|------|-------------|---------|
-| Transactors | Blue/Silver | 15-20% | Conversion opportunity |
-| Dormant | Blue | 10-15% | Re-activation |
-| Dormant | Gold/Platinum | 12-18% | Retention risk |
+> **📊 VIZ 9: Dendrogram**
+> Hierarchical tree with k=4 cut line marked
 
----
+> **📊 VIZ 10: Side-by-Side Comparison**
+> K-Means vs Hierarchical cluster assignments in PCA space
 
-## 5. Targeting Matrix
+### 2.3 Challenges & Differences
 
-**Opportunity Score** = (Util Gap) × Size × RFM Score
+| Challenge | Impact | Resolution |
+|-----------|--------|------------|
+| Computational cost | Slow on full dataset | Used sampling for dendrogram |
+| No centroids | Harder to interpret "typical" customer | Used K-Means for final profiling |
+| Hierarchical structure | Reveals sub-segments | Useful for future deep-dives |
 
-| Rank | Segment | Card | Util | RFM | N | Opportunity | Action |
-|------|---------|------|------|-----|---|-------------|--------|
-| 1 | Transactors | Blue | 0.18 | 9.2 | 1,200 | High | Intro APR + Upgrade |
-| 2 | Transactors | Silver | 0.20 | 9.5 | 800 | High | Gold upgrade path |
-| 3 | Dormant | Blue | 0.12 | 6.1 | 1,500 | Med | Cashback reactivation |
-| 4 | Dormant | Gold | 0.15 | 7.8 | 400 | Med | Personalized retention |
+**Decision:** K-Means selected as primary method — comparable performance, interpretable centroids, faster execution.
 
 ---
 
-## 6. Recommended Actions
+## Question 3: Recommendations
 
-| Priority | Target | Action |
-|----------|--------|--------|
-| 1 | Transactors × Blue/Silver | Intro APR, upgrade incentive |
-| 2 | Dormant × Blue | Cashback re-activation |
-| 3 | Dormant × Premium | VIP retention outreach |
-| 4 | Credit Dependent | Balance tools, risk monitor |
+### 3.1 Segment Descriptions
+
+#### Premium Engaged ("Power Users")
+- **Profile:** High spend, high utilization, carries revolving balance
+- **Demographics:** Established families, higher income
+- **Value:** Highest revenue customers (interest + interchange)
+- **Risk:** Monitor for over-extension
+
+#### Credit Dependent ("Revolvers")
+- **Profile:** Lower spend, but high utilization
+- **Demographics:** Mixed, some financial stress indicators
+- **Value:** Interest revenue
+- **Risk:** Default risk, requires monitoring
+
+#### Transactors ("Cash Preferred")
+- **Profile:** High spend, low utilization, pays in full
+- **Demographics:** Established professionals, higher income
+- **Value:** Interchange fees only — significant conversion opportunity
+- **Opportunity:** Convert to revolving behavior
+
+#### Dormant ("Disengaged")
+- **Profile:** Low engagement across all metrics
+- **Demographics:** Skews younger, entry-level cards
+- **Value:** Currently low
+- **Opportunity:** Re-activation campaigns
+
+> **📊 VIZ 11: Segment Profile Heatmap**
+> Normalized metrics by cluster showing relative strengths
 
 ---
 
-## 7. Next Steps
+### 3.2 Card Category Analysis
 
-1. A/B test priority actions
-2. Track: utilization lift, activation rate, churn
-3. Quarterly model refresh
+| Segment | Dominant Card | Utilization | Opportunity |
+|---------|---------------|-------------|-------------|
+| Transactors | Blue/Silver | 15-20% | High — upgrade + intro APR |
+| Dormant | Blue | 10-15% | High — re-activation |
+| Dormant | Gold/Platinum | 12-18% | Medium — retention risk |
+
+> **📊 VIZ 12: Utilization Heatmap (Segment × Card)**
+> Shows where utilization gaps exist by product
+
+> **📊 VIZ 13: Card Mix Bar Chart**
+> Card category distribution within each segment
 
 ---
 
-*Behavioral segmentation + RFM + Card Category = actionable targeting framework.*
+### 3.3 RFM Enhancement
+
+**RFM Scoring (1-5 each):**
+- R (Recency): Inverse of months inactive
+- F (Frequency): Transaction count
+- M (Monetary): Transaction amount
+
+| RFM Segment | Score | % of Transactors | % of Dormant |
+|-------------|-------|------------------|--------------|
+| Champions | 12-15 | High | Low |
+| Loyal | 9-11 | Medium | Low |
+| Potential | 6-8 | Low | Medium |
+| At Risk | 3-5 | Low | High |
+
+**Insight:** Transactors skew Champions/Loyal (engaged but not using credit). Dormant skews At Risk (disengaged).
+
+> **📊 VIZ 14: Behavioral × RFM Cross-tab**
+> Heatmap showing RFM distribution within each behavioral segment
+
+---
+
+### 3.4 Targeting Matrix
+
+**Opportunity Score** = (Utilization Gap) × Segment Size × RFM Score
+
+| Priority | Segment × Card | Opportunity | Recommended Action |
+|----------|----------------|-------------|-------------------|
+| 1 | Transactors × Blue | High | Intro APR + Silver upgrade |
+| 2 | Transactors × Silver | High | Gold upgrade path |
+| 3 | Dormant × Blue | Medium | Cashback re-activation |
+| 4 | Dormant × Gold/Platinum | Medium | Personalized retention |
+| 5 | Credit Dependent × All | Monitor | Balance tools, risk alerts |
+
+> **📊 VIZ 15: Targeting Priority Bar Chart**
+> Opportunity score by Segment × Card combination
+
+---
+
+### 3.5 Marketing Initiatives
+
+| Segment | Initiative | Channel | Offer |
+|---------|------------|---------|-------|
+| Transactors | Conversion Campaign | Email + App | 0% intro APR 12 months |
+| Transactors | Upgrade Path | Direct Mail | Waived annual fee on upgrade |
+| Dormant (Blue) | Re-activation | Digital + SMS | 5% cashback first 3 months |
+| Dormant (Premium) | Retention | Phone | Dedicated concierge, bonus points |
+| Credit Dependent | Risk Management | App | Budgeting tools, alerts |
+
+### 3.6 Product Improvements
+
+| Segment | Product Enhancement |
+|---------|---------------------|
+| Transactors | BNPL integration, installment options |
+| Dormant | Simplified rewards, lower complexity |
+| Credit Dependent | Balance transfer products, hardship programs |
+| Premium Engaged | Premium perks, exclusive access |
+
+---
+
+## Summary of Visualizations
+
+| # | Visualization | Question Answered |
+|---|---------------|-------------------|
+| 1 | Correlation Matrix | Q1 - Feature selection |
+| 2 | PCA Variance | Q1 - Feature selection |
+| 3 | Silhouette by Features | Q1 - Feature selection |
+| 4 | Elbow Plot | Q1 - Optimal k |
+| 5 | Silhouette vs k | Q1 - Optimal k |
+| 6 | 2×2 Scatter | Q1 - Cluster exploration |
+| 7 | Cluster Boxplots | Q1 - Cluster exploration |
+| 8 | PCA Clusters | Q1 - Cluster exploration |
+| 9 | Dendrogram | Q2 - Hierarchical |
+| 10 | K-Means vs Hierarchical | Q2 - Comparison |
+| 11 | Segment Heatmap | Q3 - Recommendations |
+| 12 | Util × Card Heatmap | Q3 - Recommendations |
+| 13 | Card Mix Bar | Q3 - Recommendations |
+| 14 | Behavioral × RFM | Q3 - Recommendations |
+| 15 | Targeting Priority | Q3 - Recommendations |
+
+---
+
+## Next Steps
+
+1. Stakeholder validation of segment definitions
+2. A/B test priority campaigns (Transactors conversion)
+3. Implement risk monitoring for Credit Dependent
+4. Track KPIs: utilization lift, activation rate, churn
+5. Quarterly model refresh
+
+---
+
+*Behavioral clustering + Card Category + RFM = actionable customer segmentation for utilization growth.*
