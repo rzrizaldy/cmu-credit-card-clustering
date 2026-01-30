@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Credit Card Customer Segmentation | CMU Applied ML</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3"></script>
     <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700&family=SF+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -187,17 +188,14 @@
             margin-top: 6px;
         }
         
-        /* Segment Matrix - FIXED PADDING */
-        .matrix-wrapper {
-            padding: 8px;
-        }
-        
+        /* Segment Matrix - Clean Design */
         .matrix-container {
             display: grid;
-            grid-template-columns: 36px 1fr 1fr;
-            grid-template-rows: 32px 1fr 1fr;
-            gap: 10px;
-            height: 240px;
+            grid-template-columns: 28px 1fr 1fr;
+            grid-template-rows: 24px 1fr 1fr;
+            gap: 6px;
+            height: 100%;
+            min-height: 220px;
         }
         
         .matrix-label {
@@ -217,8 +215,8 @@
         }
         
         .matrix-cell {
-            border-radius: 8px;
-            padding: 10px 8px;
+            border-radius: 6px;
+            padding: 8px 6px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -230,19 +228,19 @@
         }
         
         .matrix-cell:hover {
-            transform: translateY(-2px);
+            transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         
-        .matrix-cell.whale { background: linear-gradient(135deg, #4a8af4 0%, #2563eb 100%); }
-        .matrix-cell.dolphin { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); }
-        .matrix-cell.shark { background: linear-gradient(135deg, #f87171 0%, #dc2626 100%); }
-        .matrix-cell.barnacle { background: linear-gradient(135deg, #7dd3c0 0%, #14b8a6 100%); }
+        .matrix-cell.whale { background: var(--whale); }
+        .matrix-cell.dolphin { background: var(--dolphin); }
+        .matrix-cell.shark { background: var(--shark); }
+        .matrix-cell.barnacle { background: var(--barnacle); }
         
-        .matrix-cell .icon { font-size: 18px; margin-bottom: 2px; }
-        .matrix-cell .name { font-size: 13px; font-weight: 700; }
-        .matrix-cell .count { font-size: 10px; opacity: 0.9; }
-        .matrix-cell .pct { font-size: 16px; font-weight: 700; margin-top: 2px; }
+        .matrix-cell .icon { font-size: 16px; margin-bottom: 2px; }
+        .matrix-cell .name { font-size: 12px; font-weight: 700; }
+        .matrix-cell .count { font-size: 9px; opacity: 0.85; }
+        .matrix-cell .pct { font-size: 15px; font-weight: 700; margin-top: 2px; }
         
         /* Segment Cards */
         .segment-grid {
@@ -575,40 +573,38 @@
                         <div class="panel-title">Behavioral Segmentation Matrix</div>
                         <div style="width: 52px;"></div>
                     </div>
-                    <div class="panel-body compact">
-                        <div class="matrix-wrapper">
-                            <div class="matrix-container">
-                                <div></div>
-                                <div class="matrix-label">Low Util</div>
-                                <div class="matrix-label">High Util</div>
-                                
-                                <div class="matrix-label vertical">High Spend</div>
-                                <div class="matrix-cell dolphin">
-                                    <span class="icon">🐬</span>
-                                    <span class="name">Dolphin</span>
-                                    <span class="count">867</span>
-                                    <span class="pct">10.2%</span>
-                                </div>
-                                <div class="matrix-cell whale">
-                                    <span class="icon">🐋</span>
-                                    <span class="name">Whale</span>
-                                    <span class="count">2,888</span>
-                                    <span class="pct">34.0%</span>
-                                </div>
-                                
-                                <div class="matrix-label vertical">Low Spend</div>
-                                <div class="matrix-cell barnacle">
-                                    <span class="icon">🦪</span>
-                                    <span class="name">Barnacle</span>
-                                    <span class="count">2,641</span>
-                                    <span class="pct">31.1%</span>
-                                </div>
-                                <div class="matrix-cell shark">
-                                    <span class="icon">🦈</span>
-                                    <span class="name">Shark</span>
-                                    <span class="count">2,104</span>
-                                    <span class="pct">24.7%</span>
-                                </div>
+                    <div class="panel-body">
+                        <div class="matrix-container">
+                            <div></div>
+                            <div class="matrix-label">Low Util</div>
+                            <div class="matrix-label">High Util</div>
+                            
+                            <div class="matrix-label vertical">High Spend</div>
+                            <div class="matrix-cell dolphin">
+                                <span class="icon">🐬</span>
+                                <span class="name">Dolphin</span>
+                                <span class="count">867</span>
+                                <span class="pct">10.2%</span>
+                            </div>
+                            <div class="matrix-cell whale">
+                                <span class="icon">🐋</span>
+                                <span class="name">Whale</span>
+                                <span class="count">2,888</span>
+                                <span class="pct">34.0%</span>
+                            </div>
+                            
+                            <div class="matrix-label vertical">Low Spend</div>
+                            <div class="matrix-cell barnacle">
+                                <span class="icon">🦪</span>
+                                <span class="name">Barnacle</span>
+                                <span class="count">2,641</span>
+                                <span class="pct">31.1%</span>
+                            </div>
+                            <div class="matrix-cell shark">
+                                <span class="icon">🦈</span>
+                                <span class="name">Shark</span>
+                                <span class="count">2,104</span>
+                                <span class="pct">24.7%</span>
                             </div>
                         </div>
                     </div>
@@ -918,10 +914,14 @@
     </div>
     
     <script>
+        // Register datalabels plugin
+        Chart.register(ChartDataLabels);
+        
         // Chart defaults
         Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif";
         Chart.defaults.font.size = 11;
         Chart.defaults.color = '#5c5c5c';
+        Chart.defaults.plugins.datalabels = { display: false }; // Disable by default
         
         const colors = {
             whale: '#3d7aed',
@@ -1045,10 +1045,20 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                layout: { padding: { top: 16 } },
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        display: true,
+                        anchor: 'end',
+                        align: 'top',
+                        color: '#2c2c2c',
+                        font: { size: 9, weight: '600' }
+                    }
+                },
                 scales: {
                     x: { grid: { display: false }, title: { display: true, text: 'Dependents', font: { size: 9 } } },
-                    y: { grid: { color: '#e8e4dc' } }
+                    y: { grid: { color: '#e8e4dc' }, max: 2800 }
                 }
             }
         });
@@ -1088,10 +1098,21 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                layout: { padding: { top: 20 } },
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        display: true,
+                        anchor: 'end',
+                        align: 'top',
+                        color: '#2c2c2c',
+                        font: { size: 10, weight: '600' },
+                        formatter: v => '$' + (v/1000).toFixed(1) + 'K'
+                    }
+                },
                 scales: {
                     x: { grid: { display: false } },
-                    y: { grid: { color: '#e8e4dc' }, ticks: { callback: v => '$' + (v/1000).toFixed(0) + 'K' } }
+                    y: { grid: { color: '#e8e4dc' }, ticks: { callback: v => '$' + (v/1000).toFixed(0) + 'K' }, max: 16000 }
                 }
             }
         });
@@ -1106,10 +1127,20 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                layout: { padding: { top: 20 } },
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        display: true,
+                        anchor: 'end',
+                        align: 'top',
+                        color: '#2c2c2c',
+                        font: { size: 10, weight: '600' }
+                    }
+                },
                 scales: {
                     x: { grid: { display: false } },
-                    y: { grid: { color: '#e8e4dc' } }
+                    y: { grid: { color: '#e8e4dc' }, max: 130 }
                 }
             }
         });
