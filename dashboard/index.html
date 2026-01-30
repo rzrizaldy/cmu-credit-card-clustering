@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Card Customer Segmentation | CMU Applied ML</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3"></script>
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700&family=SF+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f5f2eb;
+            --card: #fffdf8;
+            --card-alt: #faf8f3;
+            --border: #d8d4c8;
+            --border-dark: #c4c0b4;
+            --shadow: rgba(0,0,0,0.06);
+            --text: #2c2c2c;
+            --text-secondary: #5c5c5c;
+            --text-muted: #8c8c8c;
+            --accent: #0066cc;
+            --whale: #3d7aed;
+            --dolphin: #34a853;
+            --shark: #ea4335;
+            --barnacle: #5f9ea0;
+            --orange: #e67700;
+            --purple: #7c3aed;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            font-size: 13px;
+        }
+        
+        /* Header - Retro Mac Style */
+        .header {
+            background: linear-gradient(180deg, #fafafa 0%, #e8e8e8 100%);
+            border-bottom: 1px solid var(--border-dark);
+            padding: 14px 24px;
+            box-shadow: 0 1px 0 rgba(255,255,255,0.5) inset;
+        }
+        
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+            letter-spacing: -0.3px;
+        }
+        
+        .header-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+        
+        /* Dashboard */
+        .dashboard {
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Grid */
+        .row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .col { flex: 1; min-width: 0; }
+        .col-2 { flex: 2; }
+        .col-3 { flex: 3; }
+        
+        @media (max-width: 1100px) {
+            .row { flex-wrap: wrap; }
+            .col, .col-2, .col-3 { flex: 1 1 100%; }
+        }
+        
+        /* Panel - Mac Window Style */
+        .panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px var(--shadow), 0 1px 2px var(--shadow);
+            overflow: hidden;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .panel-header {
+            padding: 10px 14px;
+            background: linear-gradient(180deg, #fafafa 0%, #f0f0f0 100%);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .panel-dots {
+            display: flex;
+            gap: 6px;
+        }
+        
+        .panel-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        .panel-dot.red { background: #ff5f57; }
+        .panel-dot.yellow { background: #febc2e; }
+        .panel-dot.green { background: #28c840; }
+        
+        .panel-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text);
+            flex: 1;
+            text-align: center;
+        }
+        
+        .panel-body {
+            padding: 16px;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .panel-body.compact {
+            padding: 12px;
+        }
+        
+        .panel-body.no-padding {
+            padding: 0;
+        }
+        
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+        
+        @media (max-width: 900px) {
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        
+        .kpi-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 2px 6px var(--shadow);
+        }
+        
+        .kpi-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--accent);
+            line-height: 1.1;
+            font-feature-settings: 'tnum';
+        }
+        
+        .kpi-value.orange { color: var(--orange); }
+        .kpi-value.green { color: var(--dolphin); }
+        .kpi-value.red { color: var(--shark); }
+        
+        .kpi-detail {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+        }
+        
+        /* Segment Matrix - FIXED PADDING */
+        .matrix-wrapper {
+            padding: 8px;
+        }
+        
+        .matrix-container {
+            display: grid;
+            grid-template-columns: 36px 1fr 1fr;
+            grid-template-rows: 32px 1fr 1fr;
+            gap: 10px;
+            height: 240px;
+        }
+        
+        .matrix-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        
+        .matrix-label.vertical {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+        }
+        
+        .matrix-cell {
+            border-radius: 8px;
+            padding: 10px 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+            transition: transform 0.15s, box-shadow 0.15s;
+            cursor: default;
+        }
+        
+        .matrix-cell:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .matrix-cell.whale { background: linear-gradient(135deg, #4a8af4 0%, #2563eb 100%); }
+        .matrix-cell.dolphin { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); }
+        .matrix-cell.shark { background: linear-gradient(135deg, #f87171 0%, #dc2626 100%); }
+        .matrix-cell.barnacle { background: linear-gradient(135deg, #7dd3c0 0%, #14b8a6 100%); }
+        
+        .matrix-cell .icon { font-size: 18px; margin-bottom: 2px; }
+        .matrix-cell .name { font-size: 13px; font-weight: 700; }
+        .matrix-cell .count { font-size: 10px; opacity: 0.9; }
+        .matrix-cell .pct { font-size: 16px; font-weight: 700; margin-top: 2px; }
+        
+        /* Segment Cards */
+        .segment-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+        
+        @media (max-width: 1100px) {
+            .segment-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        
+        .segment-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            border-top: 4px solid;
+            padding: 14px;
+            box-shadow: 0 2px 6px var(--shadow);
+        }
+        
+        .segment-card.whale { border-top-color: var(--whale); }
+        .segment-card.dolphin { border-top-color: var(--dolphin); }
+        .segment-card.shark { border-top-color: var(--shark); }
+        .segment-card.barnacle { border-top-color: var(--barnacle); }
+        
+        .segment-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .segment-icon { font-size: 16px; }
+        .segment-name { font-size: 13px; font-weight: 700; }
+        
+        .segment-tag {
+            margin-left: auto;
+            font-size: 8px;
+            font-weight: 700;
+            padding: 3px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+        
+        .tag-retain { background: #dbeafe; color: #1d4ed8; }
+        .tag-convert { background: #dcfce7; color: #15803d; }
+        .tag-monitor { background: #fee2e2; color: #b91c1c; }
+        .tag-activate { background: #ccfbf1; color: #0d9488; }
+        
+        .segment-profile {
+            font-size: 10px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+        
+        .segment-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+        }
+        
+        .segment-metric {
+            background: var(--card-alt);
+            padding: 6px;
+            text-align: center;
+            border-radius: 4px;
+        }
+        
+        .segment-metric-value {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+        }
+        
+        .segment-metric-label {
+            font-size: 8px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 220px;
+        }
+        
+        .chart-container.scatter {
+            height: 300px;
+        }
+        
+        .chart-container.tall {
+            height: 260px;
+        }
+        
+        /* Scatter Plot Canvas */
+        #clusterScatter {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Sankey */
+        .sankey-container {
+            height: 260px;
+        }
+        
+        /* Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .data-table th {
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            background: var(--card-alt);
+        }
+        
+        .data-table tbody tr:hover {
+            background: var(--card-alt);
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 9px;
+            font-weight: 600;
+        }
+        
+        .badge-blue { background: #dbeafe; color: #1d4ed8; }
+        .badge-silver { background: #e2e8f0; color: #475569; }
+        .badge-gold { background: #fef3c7; color: #b45309; }
+        .badge-platinum { background: #1e293b; color: #fff; }
+        
+        /* Info Box */
+        .info-box {
+            background: #fffbeb;
+            border: 1px solid #fcd34d;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 12px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .info-box-icon {
+            font-size: 16px;
+        }
+        
+        .info-box strong {
+            color: var(--orange);
+        }
+        
+        /* Utilization Bars */
+        .util-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .util-item:last-child {
+            border-bottom: none;
+        }
+        
+        .util-label {
+            width: 90px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .util-bar {
+            flex: 1;
+            height: 18px;
+            background: #f0ece4;
+            border-radius: 9px;
+            margin: 0 10px;
+            overflow: hidden;
+        }
+        
+        .util-fill {
+            height: 100%;
+            border-radius: 9px;
+            transition: width 0.4s ease;
+        }
+        
+        .util-value {
+            width: 44px;
+            text-align: right;
+            font-size: 12px;
+            font-weight: 700;
+            font-feature-settings: 'tnum';
+        }
+        
+        /* Insights */
+        .insight-list {
+            list-style: none;
+        }
+        
+        .insight-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 11px;
+            line-height: 1.5;
+        }
+        
+        .insight-list li:last-child { border-bottom: none; }
+        .insight-list strong { color: var(--accent); }
+        
+        /* Legend */
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+        }
+        
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 11px;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            margin-top: 16px;
+            background: var(--card);
+            border-radius: 8px 8px 0 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-title">Credit Card Customer Segmentation Dashboard</div>
+        <div class="header-subtitle">CMU Applied ML Project / Group 10: Rizaldy, Diyouva, Utami / K-Means Behavioral Clustering</div>
+    </div>
+    
+    <div class="dashboard">
+        <!-- Info Box -->
+        <div class="info-box">
+            <span class="info-box-icon">📋</span>
+            <div><strong>Data Scope:</strong> 8,500 existing customers analyzed. Churned customers (1,627) excluded to focus on actionable growth strategies for the active portfolio.</div>
+        </div>
+        
+        <!-- KPIs -->
+        <div class="kpi-grid" style="margin-bottom: 16px;">
+            <div class="kpi-card">
+                <div class="kpi-label">Active Customers</div>
+                <div class="kpi-value">8,500</div>
+                <div class="kpi-detail">Existing cardholders</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Portfolio Utilization</div>
+                <div class="kpi-value orange">27.5%</div>
+                <div class="kpi-detail">Target: 35-40%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Upgrade Candidates</div>
+                <div class="kpi-value green">3,744</div>
+                <div class="kpi-detail">44% eligible</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Re-activation Needed</div>
+                <div class="kpi-value red">2,641</div>
+                <div class="kpi-detail">Barnacle segment</div>
+            </div>
+        </div>
+        
+        <!-- Row 1: Cluster Scatter + Matrix -->
+        <div class="row">
+            <div class="col-2">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-dots">
+                            <div class="panel-dot red"></div>
+                            <div class="panel-dot yellow"></div>
+                            <div class="panel-dot green"></div>
+                        </div>
+                        <div class="panel-title">Cluster Visualization: Spend vs Utilization</div>
+                        <div style="width: 52px;"></div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="chart-container scatter">
+                            <canvas id="clusterScatter"></canvas>
+                        </div>
+                        <div class="chart-legend">
+                            <div class="legend-item"><div class="legend-dot" style="background: #3d7aed;"></div>Whale (n=2,888)</div>
+                            <div class="legend-item"><div class="legend-dot" style="background: #34a853;"></div>Dolphin (n=867)</div>
+                            <div class="legend-item"><div class="legend-dot" style="background: #ea4335;"></div>Shark (n=2,104)</div>
+                            <div class="legend-item"><div class="legend-dot" style="background: #5f9ea0;"></div>Barnacle (n=2,641)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-dots">
+                            <div class="panel-dot red"></div>
+                            <div class="panel-dot yellow"></div>
+                            <div class="panel-dot green"></div>
+                        </div>
+                        <div class="panel-title">Behavioral Segmentation Matrix</div>
+                        <div style="width: 52px;"></div>
+                    </div>
+                    <div class="panel-body compact">
+                        <div class="matrix-wrapper">
+                            <div class="matrix-container">
+                                <div></div>
+                                <div class="matrix-label">Low Util</div>
+                                <div class="matrix-label">High Util</div>
+                                
+                                <div class="matrix-label vertical">High Spend</div>
+                                <div class="matrix-cell dolphin">
+                                    <span class="icon">🐬</span>
+                                    <span class="name">Dolphin</span>
+                                    <span class="count">867</span>
+                                    <span class="pct">10.2%</span>
+                                </div>
+                                <div class="matrix-cell whale">
+                                    <span class="icon">🐋</span>
+                                    <span class="name">Whale</span>
+                                    <span class="count">2,888</span>
+                                    <span class="pct">34.0%</span>
+                                </div>
+                                
+                                <div class="matrix-label vertical">Low Spend</div>
+                                <div class="matrix-cell barnacle">
+                                    <span class="icon">🦪</span>
+                                    <span class="name">Barnacle</span>
+                                    <span class="count">2,641</span>
+                                    <span class="pct">31.1%</span>
+                                </div>
+                                <div class="matrix-cell shark">
+                                    <span class="icon">🦈</span>
+                                    <span class="name">Shark</span>
+                                    <span class="count">2,104</span>
+                                    <span class="pct">24.7%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Segment Cards -->
+        <div class="segment-grid" style="margin-bottom: 16px;">
+            <div class="segment-card whale">
+                <div class="segment-header">
+                    <span class="segment-icon">🐋</span>
+                    <span class="segment-name">Whale</span>
+                    <span class="segment-tag tag-retain">Retain</span>
+                </div>
+                <p class="segment-profile">High spend, high utilization. Revenue drivers with interest + interchange income.</p>
+                <div class="segment-metrics">
+                    <div class="segment-metric"><div class="segment-metric-value">$4,509</div><div class="segment-metric-label">Spend</div></div>
+                    <div class="segment-metric"><div class="segment-metric-value">54%</div><div class="segment-metric-label">Util</div></div>
+                    <div class="segment-metric"><div class="segment-metric-value">76</div><div class="segment-metric-label">Trans</div></div>
+                    <div class="segment-metric"><div class="segment-metric-value">$1,663</div><div class="segment-metric-label">Revolve</div></div>
+                </div>
+            </div>
+            <div class="segment-card dolphin">
+                <div class="segment-header">
+                    <span class="segment-icon">🐬</span>
+                    <span class="segment-name">Dolphin</span>
+                    <span class="segment-tag tag-convert">Convert</span>
+                </div>
+                <p class="segment-profile">Highest spenders, pay in full. Prime conversion target for utilization growth.</p>
+                <div class="segment-metrics">
+                    <div class="segment-metric"><div class="segment-metric-value">$13,824</div><div class="segment-metric-label">Spend</div></div>
+                    <div class="segment-metric"><div class="segment-metric-value">17%</div><div class="segment-metric-label">Util</div></div>
+                    <div class="segment-metric"><div class="segment-metric-value">109</div><div class="segment-metric-label">Trans</div></div>
+                    <div class="segment-metric"><div class="segment-metric-value">$1,400</div><div class="segment-metric-label">Revolve</div></div>
+                </div>
+            </div>
+            <div class="segment-card shark">
+                <div class="segment-header">
+                    <span class="segment-icon">🦈</span>
+                    <span class="segment-name">Shark</span>
+                    <span class="segment-tag tag-monitor">Monitor</span>
+                </div>
+                <p class="segment-profile">Low spend, high utilization. Credit-reliant with potential default risk.</p>
+                <div class="segment-metrics">
+                    <div class="segment-metric"><div class="segment-metric-value">$1,932</div><div class="segment-metric-label">Spend</div></div>
+                    <div class="segment-metric"><div class="segment-metric-value">32%</div><div class="segment-metric-label">Util</div></div>
+                    <div class="segment-metric"><div class="segment-metric-value">41</div><div class="segment-metric-label">Trans</div></div>
+                    <div class="segment-metric"><div class="segment-metric-value">$1,659</div><div class="segment-metric-label">Revolve</div></div>
+                </div>
+            </div>
+            <div class="segment-card barnacle">
+                <div class="segment-header">
+                    <span class="segment-icon">🦪</span>
+                    <span class="segment-name">Barnacle</span>
+                    <span class="segment-tag tag-activate">Activate</span>
+                </div>
+                <p class="segment-profile">Dormant accounts with low engagement. Re-activation needed before upgrade.</p>
+                <div class="segment-metrics">
+                    <div class="segment-metric"><div class="segment-metric-value">$3,973</div><div class="segment-metric-label">Spend</div></div>
+                    <div class="segment-metric"><div class="segment-metric-value">6%</div><div class="segment-metric-label">Util</div></div>
+                    <div class="segment-metric"><div class="segment-metric-value">70</div><div class="segment-metric-label">Trans</div></div>
+                    <div class="segment-metric"><div class="segment-metric-value">$444</div><div class="segment-metric-label">Revolve</div></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Row 2: Utilization + Sankey -->
+        <div class="row">
+            <div class="col">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-dots">
+                            <div class="panel-dot red"></div>
+                            <div class="panel-dot yellow"></div>
+                            <div class="panel-dot green"></div>
+                        </div>
+                        <div class="panel-title">Utilization by Segment</div>
+                        <div style="width: 52px;"></div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="util-item">
+                            <div class="util-label">🐋 Whale</div>
+                            <div class="util-bar"><div class="util-fill" style="width: 54%; background: linear-gradient(90deg, #3d7aed, #60a5fa);"></div></div>
+                            <div class="util-value" style="color: var(--whale);">54%</div>
+                        </div>
+                        <div class="util-item">
+                            <div class="util-label">🦈 Shark</div>
+                            <div class="util-bar"><div class="util-fill" style="width: 32%; background: linear-gradient(90deg, #ea4335, #f87171);"></div></div>
+                            <div class="util-value" style="color: var(--shark);">32%</div>
+                        </div>
+                        <div class="util-item">
+                            <div class="util-label">🐬 Dolphin</div>
+                            <div class="util-bar"><div class="util-fill" style="width: 17%; background: linear-gradient(90deg, #34a853, #4ade80);"></div></div>
+                            <div class="util-value" style="color: var(--dolphin);">17%</div>
+                        </div>
+                        <div class="util-item">
+                            <div class="util-label">🦪 Barnacle</div>
+                            <div class="util-bar"><div class="util-fill" style="width: 6%; background: linear-gradient(90deg, #5f9ea0, #7dd3c0);"></div></div>
+                            <div class="util-value" style="color: var(--barnacle);">6%</div>
+                        </div>
+                        <div style="margin-top: 12px; padding-top: 10px; border-top: 2px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 11px; font-weight: 600;">Portfolio Average</span>
+                            <span style="font-size: 14px; font-weight: 700; color: var(--orange);">27.5%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-2">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-dots">
+                            <div class="panel-dot red"></div>
+                            <div class="panel-dot yellow"></div>
+                            <div class="panel-dot green"></div>
+                        </div>
+                        <div class="panel-title">Card Tier Upgrade Flow</div>
+                        <div style="width: 52px;"></div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="sankey-container" id="sankeyChart"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Row 3: Demographics -->
+        <div class="row">
+            <div class="col">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-dots">
+                            <div class="panel-dot red"></div>
+                            <div class="panel-dot yellow"></div>
+                            <div class="panel-dot green"></div>
+                        </div>
+                        <div class="panel-title">Gender Distribution</div>
+                        <div style="width: 52px;"></div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="chart-container" style="height: 180px;">
+                            <canvas id="genderPieChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-dots">
+                            <div class="panel-dot red"></div>
+                            <div class="panel-dot yellow"></div>
+                            <div class="panel-dot green"></div>
+                        </div>
+                        <div class="panel-title">Gender by Segment</div>
+                        <div style="width: 52px;"></div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="chart-container" style="height: 180px;">
+                            <canvas id="genderSegmentChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-dots">
+                            <div class="panel-dot red"></div>
+                            <div class="panel-dot yellow"></div>
+                            <div class="panel-dot green"></div>
+                        </div>
+                        <div class="panel-title">Marital Status</div>
+                        <div style="width: 52px;"></div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="chart-container" style="height: 180px;">
+                            <canvas id="maritalChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-dots">
+                            <div class="panel-dot red"></div>
+                            <div class="panel-dot yellow"></div>
+                            <div class="panel-dot green"></div>
+                        </div>
+                        <div class="panel-title">Dependents</div>
+                        <div style="width: 52px;"></div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="chart-container" style="height: 180px;">
+                            <canvas id="dependentsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Row 4: Income + Insights -->
+        <div class="row">
+            <div class="col-2">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-dots">
+                            <div class="panel-dot red"></div>
+                            <div class="panel-dot yellow"></div>
+                            <div class="panel-dot green"></div>
+                        </div>
+                        <div class="panel-title">Income Distribution by Segment</div>
+                        <div style="width: 52px;"></div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="chart-container tall">
+                            <canvas id="incomeSegmentChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-dots">
+                            <div class="panel-dot red"></div>
+                            <div class="panel-dot yellow"></div>
+                            <div class="panel-dot green"></div>
+                        </div>
+                        <div class="panel-title">Demographic Insights</div>
+                        <div style="width: 52px;"></div>
+                    </div>
+                    <div class="panel-body">
+                        <ul class="insight-list">
+                            <li><strong>Whale segment is 71% female</strong> and skews lower income. They engage heavily with credit despite modest means.</li>
+                            <li><strong>Dolphins are 62% male</strong> and distributed across income brackets. Higher earners who prefer paying in full.</li>
+                            <li><strong>Sharks show lowest female ratio (36%)</strong>, suggesting credit-reliant behavior correlates with male demographic.</li>
+                            <li><strong>Average dependents similar</strong> across segments (2.2-2.4). Family status is not a differentiator.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Row 5: Behavioral + Card Distribution -->
+        <div class="row">
+            <div class="col">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-dots">
+                            <div class="panel-dot red"></div>
+                            <div class="panel-dot yellow"></div>
+                            <div class="panel-dot green"></div>
+                        </div>
+                        <div class="panel-title">Transaction Amount</div>
+                        <div style="width: 52px;"></div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="chart-container">
+                            <canvas id="transAmtChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-dots">
+                            <div class="panel-dot red"></div>
+                            <div class="panel-dot yellow"></div>
+                            <div class="panel-dot green"></div>
+                        </div>
+                        <div class="panel-title">Transaction Count</div>
+                        <div style="width: 52px;"></div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="chart-container">
+                            <canvas id="transCtChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-dots">
+                            <div class="panel-dot red"></div>
+                            <div class="panel-dot yellow"></div>
+                            <div class="panel-dot green"></div>
+                        </div>
+                        <div class="panel-title">Card Tier Distribution</div>
+                        <div style="width: 52px;"></div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="chart-container">
+                            <canvas id="cardDistChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        CMU Applied ML Project / Group 10: Rizaldy, Diyouva, Utami / K-Means Behavioral Clustering on 4 Features
+    </div>
+    
+    <script>
+        // Chart defaults
+        Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif";
+        Chart.defaults.font.size = 11;
+        Chart.defaults.color = '#5c5c5c';
+        
+        const colors = {
+            whale: '#3d7aed',
+            dolphin: '#34a853',
+            shark: '#ea4335',
+            barnacle: '#5f9ea0'
+        };
+        
+        const segmentOrder = ['Whale', 'Dolphin', 'Shark', 'Barnacle'];
+        const segmentColors = [colors.whale, colors.dolphin, colors.shark, colors.barnacle];
+        
+        // Scatter plot data
+        const scatterData = [{"s": "W", "x": 3647, "y": 0.47}, {"s": "W", "x": 4869, "y": 0.48}, {"s": "W", "x": 4426, "y": 0.62}, {"s": "W", "x": 4739, "y": 0.48}, {"s": "W", "x": 8766, "y": 0.06}, {"s": "W", "x": 4495, "y": 0.81}, {"s": "W", "x": 4084, "y": 0.6}, {"s": "W", "x": 5228, "y": 0.78}, {"s": "W", "x": 4117, "y": 0.41}, {"s": "W", "x": 4563, "y": 0.85}, {"s": "W", "x": 7136, "y": 0.48}, {"s": "W", "x": 4209, "y": 0.58}, {"s": "W", "x": 4421, "y": 0.54}, {"s": "W", "x": 4640, "y": 0.81}, {"s": "W", "x": 4519, "y": 0.79}, {"s": "W", "x": 4647, "y": 0.95}, {"s": "W", "x": 4417, "y": 0.29}, {"s": "W", "x": 3534, "y": 0.82}, {"s": "W", "x": 4433, "y": 0.67}, {"s": "W", "x": 4451, "y": 0.51}, {"s": "W", "x": 4815, "y": 0.57}, {"s": "W", "x": 3895, "y": 0.41}, {"s": "W", "x": 4237, "y": 0.6}, {"s": "W", "x": 4698, "y": 0.55}, {"s": "W", "x": 4265, "y": 0.62}, {"s": "W", "x": 4505, "y": 0.33}, {"s": "W", "x": 3968, "y": 0.52}, {"s": "W", "x": 4130, "y": 0.72}, {"s": "W", "x": 3913, "y": 0.55}, {"s": "W", "x": 4242, "y": 0.53}, {"s": "W", "x": 4620, "y": 0.61}, {"s": "W", "x": 4724, "y": 0.41}, {"s": "W", "x": 4540, "y": 0.56}, {"s": "W", "x": 4863, "y": 0.77}, {"s": "W", "x": 4538, "y": 0.76}, {"s": "W", "x": 4076, "y": 0.33}, {"s": "W", "x": 4881, "y": 0.58}, {"s": "W", "x": 1911, "y": 0.93}, {"s": "W", "x": 7850, "y": 0.25}, {"s": "W", "x": 4759, "y": 0.77}, {"s": "W", "x": 7352, "y": 0.8}, {"s": "W", "x": 8202, "y": 0.25}, {"s": "W", "x": 4534, "y": 0.62}, {"s": "W", "x": 4431, "y": 0.2}, {"s": "W", "x": 4940, "y": 0.77}, {"s": "W", "x": 4134, "y": 0.6}, {"s": "W", "x": 4995, "y": 0.17}, {"s": "W", "x": 4010, "y": 0.72}, {"s": "W", "x": 4364, "y": 0.49}, {"s": "W", "x": 4956, "y": 0.55}, {"s": "W", "x": 3904, "y": 0.86}, {"s": "W", "x": 7745, "y": 0.6}, {"s": "W", "x": 4779, "y": 0.71}, {"s": "W", "x": 4498, "y": 0.07}, {"s": "W", "x": 5524, "y": 0.68}, {"s": "W", "x": 4533, "y": 0.62}, {"s": "W", "x": 4961, "y": 0.76}, {"s": "W", "x": 4198, "y": 0.77}, {"s": "W", "x": 4809, "y": 0.87}, {"s": "W", "x": 4166, "y": 0.52}, {"s": "W", "x": 4246, "y": 0.14}, {"s": "W", "x": 4480, "y": 0.92}, {"s": "W", "x": 5072, "y": 0.16}, {"s": "W", "x": 3896, "y": 0.6}, {"s": "W", "x": 4921, "y": 0.56}, {"s": "W", "x": 3151, "y": 0.57}, {"s": "W", "x": 4386, "y": 0.56}, {"s": "W", "x": 4185, "y": 0.62}, {"s": "W", "x": 4630, "y": 0.5}, {"s": "W", "x": 5187, "y": 0.69}, {"s": "W", "x": 4106, "y": 0.52}, {"s": "W", "x": 2429, "y": 0.22}, {"s": "W", "x": 4986, "y": 0.56}, {"s": "W", "x": 4899, "y": 0.69}, {"s": "W", "x": 4504, "y": 0.54}, {"s": "W", "x": 3244, "y": 0.38}, {"s": "W", "x": 3889, "y": 0.85}, {"s": "W", "x": 4439, "y": 0.58}, {"s": "W", "x": 3339, "y": 0.89}, {"s": "W", "x": 4006, "y": 0.58},
+        {"s": "D", "x": 13083, "y": 0.05}, {"s": "D", "x": 13159, "y": 0.12}, {"s": "D", "x": 8420, "y": 0.04}, {"s": "D", "x": 13643, "y": 0.09}, {"s": "D", "x": 15738, "y": 0.2}, {"s": "D", "x": 15763, "y": 0.25}, {"s": "D", "x": 15349, "y": 0.0}, {"s": "D", "x": 14471, "y": 0.18}, {"s": "D", "x": 8426, "y": 0.2}, {"s": "D", "x": 14969, "y": 0.39}, {"s": "D", "x": 8879, "y": 0.06}, {"s": "D", "x": 14023, "y": 0.16}, {"s": "D", "x": 8450, "y": 0.05}, {"s": "D", "x": 14615, "y": 0.04}, {"s": "D", "x": 15584, "y": 0.07}, {"s": "D", "x": 16493, "y": 0.11}, {"s": "D", "x": 12779, "y": 0.09}, {"s": "D", "x": 15391, "y": 0.32}, {"s": "D", "x": 13816, "y": 0.39}, {"s": "D", "x": 13803, "y": 0.47}, {"s": "D", "x": 8609, "y": 0.27}, {"s": "D", "x": 13345, "y": 0.07}, {"s": "D", "x": 15152, "y": 0.22}, {"s": "D", "x": 8980, "y": 0.12}, {"s": "D", "x": 7747, "y": 0.14}, {"s": "D", "x": 16605, "y": 0.18}, {"s": "D", "x": 15656, "y": 0.68}, {"s": "D", "x": 14812, "y": 0.06}, {"s": "D", "x": 14672, "y": 0.04}, {"s": "D", "x": 15380, "y": 0.11}, {"s": "D", "x": 14432, "y": 0.38}, {"s": "D", "x": 13247, "y": 0.02}, {"s": "D", "x": 14279, "y": 0.02}, {"s": "D", "x": 15203, "y": 0.1}, {"s": "D", "x": 8514, "y": 0.26}, {"s": "D", "x": 14844, "y": 0.1}, {"s": "D", "x": 14716, "y": 0.03}, {"s": "D", "x": 16023, "y": 0.51}, {"s": "D", "x": 12739, "y": 0.0}, {"s": "D", "x": 14747, "y": 0.06}, {"s": "D", "x": 15211, "y": 0.14}, {"s": "D", "x": 16179, "y": 0.15}, {"s": "D", "x": 15903, "y": 0.11}, {"s": "D", "x": 14840, "y": 0.06}, {"s": "D", "x": 13517, "y": 0.27}, {"s": "D", "x": 15281, "y": 0.09}, {"s": "D", "x": 16937, "y": 0.25}, {"s": "D", "x": 13781, "y": 0.0}, {"s": "D", "x": 14198, "y": 0.0}, {"s": "D", "x": 14667, "y": 0.06}, {"s": "D", "x": 15577, "y": 0.15}, {"s": "D", "x": 13625, "y": 0.43}, {"s": "D", "x": 15513, "y": 0.14}, {"s": "D", "x": 13505, "y": 0.36}, {"s": "D", "x": 14781, "y": 0.38}, {"s": "D", "x": 13940, "y": 0.04}, {"s": "D", "x": 8332, "y": 0.07}, {"s": "D", "x": 12871, "y": 0.03}, {"s": "D", "x": 15584, "y": 0.04}, {"s": "D", "x": 15354, "y": 0.17},
+        {"s": "S", "x": 1151, "y": 0.52}, {"s": "S", "x": 1193, "y": 0.35}, {"s": "S", "x": 2093, "y": 0.81}, {"s": "S", "x": 1649, "y": 0.18}, {"s": "S", "x": 3819, "y": 0.09}, {"s": "S", "x": 2221, "y": 0.19}, {"s": "S", "x": 2712, "y": 0.31}, {"s": "S", "x": 1584, "y": 0.12}, {"s": "S", "x": 1468, "y": 0.3}, {"s": "S", "x": 1739, "y": 0.04}, {"s": "S", "x": 3831, "y": 0.53}, {"s": "S", "x": 2336, "y": 0.04}, {"s": "S", "x": 1978, "y": 0.33}, {"s": "S", "x": 1489, "y": 0.33}, {"s": "S", "x": 2024, "y": 0.42}, {"s": "S", "x": 2074, "y": 0.47}, {"s": "S", "x": 1734, "y": 0.28}, {"s": "S", "x": 1980, "y": 0.14}, {"s": "S", "x": 1797, "y": 0.14}, {"s": "S", "x": 2169, "y": 0.58}, {"s": "S", "x": 1438, "y": 0.2}, {"s": "S", "x": 1219, "y": 0.76}, {"s": "S", "x": 1178, "y": 0.07}, {"s": "S", "x": 1661, "y": 0.5}, {"s": "S", "x": 3284, "y": 0.05}, {"s": "S", "x": 1244, "y": 0.06}, {"s": "S", "x": 3291, "y": 0.12}, {"s": "S", "x": 1511, "y": 0.08}, {"s": "S", "x": 2169, "y": 0.66}, {"s": "S", "x": 2007, "y": 0.15}, {"s": "S", "x": 1615, "y": 0.69}, {"s": "S", "x": 4392, "y": 0.11}, {"s": "S", "x": 1319, "y": 0.15}, {"s": "S", "x": 1682, "y": 0.26}, {"s": "S", "x": 1457, "y": 0.2}, {"s": "S", "x": 1776, "y": 0.41}, {"s": "S", "x": 906, "y": 0.19}, {"s": "S", "x": 1407, "y": 0.54}, {"s": "S", "x": 2580, "y": 0.1}, {"s": "S", "x": 1590, "y": 0.04}, {"s": "S", "x": 2261, "y": 0.17}, {"s": "S", "x": 1661, "y": 0.09}, {"s": "S", "x": 2015, "y": 0.12}, {"s": "S", "x": 1719, "y": 0.75}, {"s": "S", "x": 1721, "y": 0.05}, {"s": "S", "x": 3659, "y": 0.14}, {"s": "S", "x": 1541, "y": 0.87}, {"s": "S", "x": 2510, "y": 0.34}, {"s": "S", "x": 1770, "y": 0.04}, {"s": "S", "x": 2144, "y": 0.54}, {"s": "S", "x": 2163, "y": 0.04}, {"s": "S", "x": 1787, "y": 0.26}, {"s": "S", "x": 1882, "y": 0.11}, {"s": "S", "x": 1258, "y": 0.15}, {"s": "S", "x": 1754, "y": 0.16}, {"s": "S", "x": 1820, "y": 0.26}, {"s": "S", "x": 1912, "y": 0.33}, {"s": "S", "x": 3981, "y": 0.08}, {"s": "S", "x": 1582, "y": 0.08}, {"s": "S", "x": 1402, "y": 0.72},
+        {"s": "B", "x": 4918, "y": 0.0}, {"s": "B", "x": 1184, "y": 0.0}, {"s": "B", "x": 4211, "y": 0.2}, {"s": "B", "x": 3878, "y": 0.24}, {"s": "B", "x": 2401, "y": 0.21}, {"s": "B", "x": 4699, "y": 0.04}, {"s": "B", "x": 3193, "y": 0.0}, {"s": "B", "x": 4435, "y": 0.0}, {"s": "B", "x": 5121, "y": 0.21}, {"s": "B", "x": 3057, "y": 0.0}, {"s": "B", "x": 4278, "y": 0.18}, {"s": "B", "x": 3246, "y": 0.0}, {"s": "B", "x": 4512, "y": 0.0}, {"s": "B", "x": 4617, "y": 0.0}, {"s": "B", "x": 3906, "y": 0.14}, {"s": "B", "x": 4035, "y": 0.0}, {"s": "B", "x": 4333, "y": 0.0}, {"s": "B", "x": 4680, "y": 0.0}, {"s": "B", "x": 2314, "y": 0.0}, {"s": "B", "x": 3297, "y": 0.08}, {"s": "B", "x": 4187, "y": 0.1}, {"s": "B", "x": 1907, "y": 0.09}, {"s": "B", "x": 4253, "y": 0.05}, {"s": "B", "x": 8055, "y": 0.05}, {"s": "B", "x": 4796, "y": 0.0}, {"s": "B", "x": 4094, "y": 0.13}, {"s": "B", "x": 4345, "y": 0.13}, {"s": "B", "x": 3576, "y": 0.0}, {"s": "B", "x": 3951, "y": 0.02}, {"s": "B", "x": 5052, "y": 0.1}, {"s": "B", "x": 2552, "y": 0.1}, {"s": "B", "x": 4346, "y": 0.0}, {"s": "B", "x": 3560, "y": 0.0}, {"s": "B", "x": 7190, "y": 0.03}, {"s": "B", "x": 3239, "y": 0.22}, {"s": "B", "x": 1364, "y": 0.0}, {"s": "B", "x": 4586, "y": 0.06}, {"s": "B", "x": 3920, "y": 0.06}, {"s": "B", "x": 4028, "y": 0.23}, {"s": "B", "x": 3282, "y": 0.0}, {"s": "B", "x": 4757, "y": 0.3}, {"s": "B", "x": 4080, "y": 0.29}, {"s": "B", "x": 4743, "y": 0.0}, {"s": "B", "x": 2949, "y": 0.0}, {"s": "B", "x": 5022, "y": 0.0}, {"s": "B", "x": 3250, "y": 0.0}, {"s": "B", "x": 4241, "y": 0.22}, {"s": "B", "x": 3969, "y": 0.0}, {"s": "B", "x": 7495, "y": 0.0}, {"s": "B", "x": 5108, "y": 0.0}, {"s": "B", "x": 5169, "y": 0.14}, {"s": "B", "x": 2781, "y": 0.28}, {"s": "B", "x": 5198, "y": 0.0}, {"s": "B", "x": 1058, "y": 0.0}, {"s": "B", "x": 1675, "y": 0.12}, {"s": "B", "x": 3825, "y": 0.2}, {"s": "B", "x": 4812, "y": 0.0}, {"s": "B", "x": 2058, "y": 0.03}, {"s": "B", "x": 2051, "y": 0.1}, {"s": "B", "x": 4155, "y": 0.0}];
+        
+        // Cluster Scatter Plot
+        const segmentMap = { 'W': 'Whale', 'D': 'Dolphin', 'S': 'Shark', 'B': 'Barnacle' };
+        const colorMap = { 'W': colors.whale, 'D': colors.dolphin, 'S': colors.shark, 'B': colors.barnacle };
+        
+        const datasets = ['W', 'D', 'S', 'B'].map(key => ({
+            label: segmentMap[key],
+            data: scatterData.filter(d => d.s === key).map(d => ({ x: d.x, y: d.y * 100 })),
+            backgroundColor: colorMap[key] + '99',
+            borderColor: colorMap[key],
+            borderWidth: 1,
+            pointRadius: 4,
+            pointHoverRadius: 6
+        }));
+        
+        new Chart(document.getElementById('clusterScatter'), {
+            type: 'scatter',
+            data: { datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `${ctx.dataset.label}: $${ctx.raw.x.toLocaleString()}, ${ctx.raw.y.toFixed(0)}% util`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Total Transaction Amount ($)', font: { size: 11, weight: '600' } },
+                        grid: { color: '#e8e4dc' },
+                        ticks: { callback: v => '$' + (v/1000) + 'K' }
+                    },
+                    y: {
+                        title: { display: true, text: 'Utilization Ratio (%)', font: { size: 11, weight: '600' } },
+                        grid: { color: '#e8e4dc' },
+                        min: 0,
+                        max: 100,
+                        ticks: { callback: v => v + '%' }
+                    }
+                }
+            }
+        });
+        
+        // Gender Pie
+        new Chart(document.getElementById('genderPieChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Female (52%)', 'Male (48%)'],
+                datasets: [{ data: [4428, 4072], backgroundColor: ['#a855f7', '#3d7aed'], borderWidth: 0 }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '55%',
+                plugins: { legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true, font: { size: 10 } } } }
+            }
+        });
+        
+        // Gender by Segment
+        new Chart(document.getElementById('genderSegmentChart'), {
+            type: 'bar',
+            data: {
+                labels: segmentOrder,
+                datasets: [
+                    { label: 'Female', data: [2038, 331, 768, 1291], backgroundColor: '#a855f7' },
+                    { label: 'Male', data: [850, 536, 1336, 1350], backgroundColor: '#3d7aed' }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { padding: 8, usePointStyle: true, font: { size: 9 } } } },
+                scales: {
+                    x: { stacked: true, grid: { display: false } },
+                    y: { stacked: true, grid: { color: '#e8e4dc' } }
+                }
+            }
+        });
+        
+        // Marital
+        new Chart(document.getElementById('maritalChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Married', 'Single', 'Divorced', 'Unknown'],
+                datasets: [{ data: [3978, 3275, 627, 620], backgroundColor: ['#3d7aed', '#34a853', '#f59e0b', '#9ca3af'], borderWidth: 0 }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '50%',
+                plugins: { legend: { position: 'bottom', labels: { padding: 8, usePointStyle: true, font: { size: 9 } } } }
+            }
+        });
+        
+        // Dependents
+        new Chart(document.getElementById('dependentsChart'), {
+            type: 'bar',
+            data: {
+                labels: ['0', '1', '2', '3', '4', '5'],
+                datasets: [{ data: [769, 1569, 2238, 2250, 1314, 360], backgroundColor: '#5f9ea0', borderRadius: 4 }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, title: { display: true, text: 'Dependents', font: { size: 9 } } },
+                    y: { grid: { color: '#e8e4dc' } }
+                }
+            }
+        });
+        
+        // Income
+        new Chart(document.getElementById('incomeSegmentChart'), {
+            type: 'bar',
+            data: {
+                labels: segmentOrder,
+                datasets: [
+                    { label: '<$40K', data: [1420, 235, 523, 771], backgroundColor: '#ea4335' },
+                    { label: '$40-60K', data: [590, 156, 366, 407], backgroundColor: '#f59e0b' },
+                    { label: '$60-80K', data: [247, 152, 385, 429], backgroundColor: '#fbbf24' },
+                    { label: '$80-120K', data: [233, 169, 440, 451], backgroundColor: '#34a853' },
+                    { label: '$120K+', data: [97, 85, 206, 213], backgroundColor: '#3d7aed' }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: { legend: { position: 'bottom', labels: { padding: 10, usePointStyle: true, font: { size: 9 } } } },
+                scales: {
+                    x: { stacked: true, grid: { color: '#e8e4dc' } },
+                    y: { stacked: true, grid: { display: false } }
+                }
+            }
+        });
+        
+        // Trans Amount
+        new Chart(document.getElementById('transAmtChart'), {
+            type: 'bar',
+            data: {
+                labels: segmentOrder,
+                datasets: [{ data: [4509, 13824, 1932, 3973], backgroundColor: segmentColors, borderRadius: 4 }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { grid: { color: '#e8e4dc' }, ticks: { callback: v => '$' + (v/1000).toFixed(0) + 'K' } }
+                }
+            }
+        });
+        
+        // Trans Count
+        new Chart(document.getElementById('transCtChart'), {
+            type: 'bar',
+            data: {
+                labels: segmentOrder,
+                datasets: [{ data: [76, 109, 41, 70], backgroundColor: segmentColors, borderRadius: 4 }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { grid: { color: '#e8e4dc' } }
+                }
+            }
+        });
+        
+        // Card Distribution
+        new Chart(document.getElementById('cardDistChart'), {
+            type: 'bar',
+            data: {
+                labels: segmentOrder,
+                datasets: [
+                    { label: 'Blue', data: [2844, 664, 1980, 2429], backgroundColor: '#3d7aed' },
+                    { label: 'Silver', data: [31, 154, 107, 181], backgroundColor: '#64748b' },
+                    { label: 'Gold', data: [13, 38, 15, 29], backgroundColor: '#f59e0b' },
+                    { label: 'Platinum', data: [0, 11, 2, 2], backgroundColor: '#1e293b' }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { padding: 8, usePointStyle: true, font: { size: 9 } } } },
+                scales: {
+                    x: { stacked: true, grid: { display: false } },
+                    y: { stacked: true, grid: { color: '#e8e4dc' } }
+                }
+            }
+        });
+        
+        // Sankey
+        const sankeyData = {
+            nodes: [
+                { name: "Whale" }, { name: "Dolphin" }, { name: "Shark" }, { name: "Barnacle" },
+                { name: "Silver" }, { name: "Gold" }, { name: "Platinum" }, { name: "No Change" }
+            ],
+            links: [
+                { source: 0, target: 4, value: 2844 }, { source: 0, target: 5, value: 31 }, { source: 0, target: 6, value: 13 },
+                { source: 1, target: 4, value: 664 }, { source: 1, target: 5, value: 154 }, { source: 1, target: 6, value: 38 }, { source: 1, target: 7, value: 11 },
+                { source: 2, target: 7, value: 2104 }, { source: 3, target: 7, value: 2641 }
+            ]
+        };
+        
+        const container = document.getElementById('sankeyChart');
+        const width = container.clientWidth;
+        const height = 240;
+        
+        const svg = d3.select('#sankeyChart').append('svg').attr('width', width).attr('height', height);
+        
+        const sankey = d3.sankey().nodeWidth(16).nodePadding(12).extent([[1, 5], [width - 1, height - 5]]);
+        const { nodes, links } = sankey({
+            nodes: sankeyData.nodes.map(d => Object.assign({}, d)),
+            links: sankeyData.links.map(d => Object.assign({}, d))
+        });
+        
+        const nodeColors = {
+            "Whale": colors.whale, "Dolphin": colors.dolphin, "Shark": colors.shark, "Barnacle": colors.barnacle,
+            "Silver": '#64748b', "Gold": '#f59e0b', "Platinum": '#1e293b', "No Change": '#9ca3af'
+        };
+        
+        svg.append('g').selectAll('path').data(links).join('path')
+            .attr('d', d3.sankeyLinkHorizontal())
+            .attr('fill', 'none')
+            .attr('stroke', d => nodeColors[d.source.name])
+            .attr('stroke-width', d => Math.max(1, d.width))
+            .attr('stroke-opacity', 0.4);
+        
+        const node = svg.append('g').selectAll('g').data(nodes).join('g');
+        node.append('rect')
+            .attr('x', d => d.x0).attr('y', d => d.y0)
+            .attr('height', d => d.y1 - d.y0).attr('width', d => d.x1 - d.x0)
+            .attr('fill', d => nodeColors[d.name]).attr('rx', 3);
+        node.append('text')
+            .attr('x', d => d.x0 < width / 2 ? d.x1 + 6 : d.x0 - 6)
+            .attr('y', d => (d.y1 + d.y0) / 2).attr('dy', '0.35em')
+            .attr('text-anchor', d => d.x0 < width / 2 ? 'start' : 'end')
+            .attr('font-size', '10px').attr('fill', '#2c2c2c')
+            .text(d => d.name + ' (' + d.value.toLocaleString() + ')');
+    </script>
+</body>
+</html>
