@@ -1,37 +1,70 @@
-# Credit Card Customer Clustering
+# Credit Card Customer Segmentation
 
-A machine learning project for customer segmentation using clustering algorithms. This project analyzes credit card customer data to identify distinct customer groups for targeted marketing and product strategies.
+CMU Applied ML Project - Group 10: Rizaldy, Diyouva, Utami
 
-## Project Overview
+## Overview
 
-This project applies unsupervised learning techniques to segment credit card customers based on their behavioral and demographic attributes. The goal is to provide actionable insights for business decision-making.
+Behavioral clustering of 8,500 credit card customers to drive utilization growth. Churned customers excluded to focus on actionable strategies for the active portfolio.
 
-### Clustering Methods Used
+**Live Dashboard:** [View on GitHub Pages](https://your-username.github.io/cmu_applied_ml_project_1/dashboard/)
 
-- **K-Means Clustering**: Primary segmentation method with multiple techniques for optimal k selection
-- **Hierarchical Clustering**: Alternative approach using agglomerative clustering
-- **DBSCAN**: Density-based clustering for identifying arbitrary-shaped clusters
+## Segments
 
-## Dataset
+| Segment | Size | Avg Spend | Utilization | Strategy |
+|---------|------|-----------|-------------|----------|
+| Whale | 34% | $4,509 | 54% | Retain - upgrade to premium |
+| Dolphin | 10% | $13,824 | 17% | Convert - intro APR offers |
+| Shark | 25% | $1,932 | 32% | Monitor - credit risk |
+| Barnacle | 31% | $3,973 | 6% | Activate - re-engagement |
 
-The dataset contains ~10,000 credit card customers with the following features:
+## Methods
 
-| Category | Features |
-|----------|----------|
-| Demographics | Customer Age, Gender, Dependent Count, Education Level, Marital Status, Income Category |
-| Account Info | Card Category, Months on Book, Total Relationship Count |
-| Activity | Months Inactive, Contacts Count, Total Transactions (Amount & Count) |
-| Financial | Credit Limit, Revolving Balance, Avg Open to Buy, Utilization Ratio |
+- K-Means clustering on 4 behavioral features
+- Hierarchical clustering for validation (ARI > 0.75)
+- Silhouette score optimization (k=4)
 
-## Project Structure
+## Files
 
 ```
-.
-├── ML_Foundations_Starter_Code_for_Clustering_Credit_Card_Customers.ipynb
-├── credit_card_customers.csv
-├── instruction.md
-└── README.md
+├── applied_ml_creditcard_group10.ipynb   # Main analysis
+├── cluster_data.csv                       # Segmented customer data
+├── dashboard/index.html                   # Interactive dashboard
+├── credit_card_customers.csv              # Raw data
+└── analysis_report.md                     # Detailed findings
 ```
+
+## Dashboard
+
+Interactive visualization built with Chart.js and D3.js. Features:
+- Cluster scatter plot (Spend vs Utilization)
+- Segment profiles and metrics
+- Card tier upgrade flow (Sankey)
+- Demographic breakdowns
+- 100% stacked comparisons
+
+## Deploy to GitHub Pages
+
+1. Push your code to GitHub:
+```bash
+git add .
+git commit -m "Add segmentation dashboard"
+git push origin main
+```
+
+2. Enable GitHub Pages:
+   - Go to repository Settings
+   - Click "Pages" in left sidebar
+   - Source: Deploy from a branch
+   - Branch: `main`
+   - Folder: `/ (root)`
+   - Click Save
+
+3. Access dashboard at:
+```
+https://<your-username>.github.io/<repo-name>/dashboard/
+```
+
+Note: GitHub Pages may take 1-2 minutes to deploy after enabling.
 
 ## Requirements
 
@@ -40,30 +73,14 @@ pandas
 numpy
 matplotlib
 seaborn
-plotly
 scikit-learn
+scipy
 hdbscan
 kneed
 yellowbrick
-scipy
+plotly
 ```
-
-## Getting Started
-
-1. Clone this repository
-2. Install dependencies: `pip install -r requirements.txt` (or install packages listed above)
-3. Open the Jupyter notebook and run the cells
-
-## Methods for Optimal Cluster Selection
-
-- Elbow Method
-- Silhouette Analysis
-- Dendrogram Analysis (for Hierarchical)
-
-## Course
-
-CMU Applied Machine Learning - ML Foundations
 
 ## License
 
-For educational purposes only.
+Educational use only - CMU Applied Machine Learning

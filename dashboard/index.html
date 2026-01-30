@@ -896,12 +896,17 @@
                             <div class="panel-dot yellow"></div>
                             <div class="panel-dot green"></div>
                         </div>
-                        <div class="panel-title">Card Tier Distribution</div>
+                        <div class="panel-title">Card Tier: Current vs Recommended</div>
                         <div style="width: 52px;"></div>
                     </div>
-                    <div class="panel-body">
-                        <div class="chart-container">
-                            <canvas id="cardDistChart"></canvas>
+                    <div class="panel-body" style="padding: 12px;">
+                        <div style="font-size: 10px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px;">CURRENT</div>
+                        <div class="chart-container" style="height: 90px;">
+                            <canvas id="cardDistCurrentChart"></canvas>
+                        </div>
+                        <div style="font-size: 10px; font-weight: 600; color: var(--text-muted); margin: 8px 0 4px;">RECOMMENDED</div>
+                        <div class="chart-container" style="height: 90px;">
+                            <canvas id="cardDistRecommendedChart"></canvas>
                         </div>
                     </div>
                 </div>
@@ -1063,26 +1068,45 @@
             }
         });
         
-        // Income
+        // Income - 100% stacked
+        const incomeRaw = {
+            '<$40K': [1420, 235, 523, 771],
+            '$40-60K': [590, 156, 366, 407],
+            '$60-80K': [247, 152, 385, 429],
+            '$80-120K': [233, 169, 440, 451],
+            '$120K+': [97, 85, 206, 213]
+        };
+        const incomeTotals = [2587, 797, 1920, 2271]; // Whale, Dolphin, Shark, Barnacle
+        const incomeColors = ['#ea4335', '#f59e0b', '#fbbf24', '#34a853', '#3d7aed'];
+        
         new Chart(document.getElementById('incomeSegmentChart'), {
             type: 'bar',
             data: {
                 labels: segmentOrder,
-                datasets: [
-                    { label: '<$40K', data: [1420, 235, 523, 771], backgroundColor: '#ea4335' },
-                    { label: '$40-60K', data: [590, 156, 366, 407], backgroundColor: '#f59e0b' },
-                    { label: '$60-80K', data: [247, 152, 385, 429], backgroundColor: '#fbbf24' },
-                    { label: '$80-120K', data: [233, 169, 440, 451], backgroundColor: '#34a853' },
-                    { label: '$120K+', data: [97, 85, 206, 213], backgroundColor: '#3d7aed' }
-                ]
+                datasets: Object.keys(incomeRaw).map((label, i) => ({
+                    label,
+                    data: incomeRaw[label].map((v, j) => (v / incomeTotals[j] * 100).toFixed(1)),
+                    backgroundColor: incomeColors[i],
+                    rawData: incomeRaw[label]
+                }))
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 indexAxis: 'y',
-                plugins: { legend: { position: 'bottom', labels: { padding: 10, usePointStyle: true, font: { size: 9 } } } },
+                plugins: {
+                    legend: { position: 'bottom', labels: { padding: 10, usePointStyle: true, font: { size: 9 } } },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => {
+                                const raw = ctx.dataset.rawData[ctx.dataIndex];
+                                return `${ctx.dataset.label}: ${raw.toLocaleString()} (${ctx.raw}%)`;
+                            }
+                        }
+                    }
+                },
                 scales: {
-                    x: { stacked: true, grid: { color: '#e8e4dc' } },
+                    x: { stacked: true, grid: { color: '#e8e4dc' }, max: 100, ticks: { callback: v => v + '%' } },
                     y: { stacked: true, grid: { display: false } }
                 }
             }
@@ -1145,25 +1169,87 @@
             }
         });
         
-        // Card Distribution
-        new Chart(document.getElementById('cardDistChart'), {
+        // Card Distribution - Current (100% stacked)
+        const cardCurrentRaw = {
+            Blue: [2844, 664, 1980, 2429],
+            Silver: [31, 154, 107, 181],
+            Gold: [13, 38, 15, 29],
+            Platinum: [0, 11, 2, 2]
+        };
+        const cardTotals = [2888, 867, 2104, 2641];
+        const cardColors = ['#3d7aed', '#64748b', '#f59e0b', '#1e293b'];
+        
+        new Chart(document.getElementById('cardDistCurrentChart'), {
             type: 'bar',
             data: {
                 labels: segmentOrder,
-                datasets: [
-                    { label: 'Blue', data: [2844, 664, 1980, 2429], backgroundColor: '#3d7aed' },
-                    { label: 'Silver', data: [31, 154, 107, 181], backgroundColor: '#64748b' },
-                    { label: 'Gold', data: [13, 38, 15, 29], backgroundColor: '#f59e0b' },
-                    { label: 'Platinum', data: [0, 11, 2, 2], backgroundColor: '#1e293b' }
-                ]
+                datasets: Object.keys(cardCurrentRaw).map((label, i) => ({
+                    label,
+                    data: cardCurrentRaw[label].map((v, j) => (v / cardTotals[j] * 100).toFixed(1)),
+                    backgroundColor: cardColors[i],
+                    rawData: cardCurrentRaw[label]
+                }))
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom', labels: { padding: 8, usePointStyle: true, font: { size: 9 } } } },
+                indexAxis: 'y',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => {
+                                const raw = ctx.dataset.rawData[ctx.dataIndex];
+                                return `${ctx.dataset.label}: ${raw.toLocaleString()} (${ctx.raw}%)`;
+                            }
+                        }
+                    }
+                },
                 scales: {
-                    x: { stacked: true, grid: { display: false } },
-                    y: { stacked: true, grid: { color: '#e8e4dc' } }
+                    x: { stacked: true, display: false, max: 100 },
+                    y: { stacked: true, grid: { display: false } }
+                }
+            }
+        });
+        
+        // Card Distribution - Recommended (100% stacked)
+        // After upgrades: Whale & Dolphin get upgraded, Shark & Barnacle stay same
+        const cardRecommendedRaw = {
+            Blue: [0, 0, 1980, 2429],           // Whale/Dolphin Blue -> Silver
+            Silver: [2844, 664, 107, 181],      // Whale/Dolphin get Silver from Blue
+            Gold: [31, 154, 15, 29],            // Whale/Dolphin Silver -> Gold
+            Platinum: [13, 49, 2, 2]            // Whale/Dolphin Gold -> Platinum
+        };
+        
+        new Chart(document.getElementById('cardDistRecommendedChart'), {
+            type: 'bar',
+            data: {
+                labels: segmentOrder,
+                datasets: Object.keys(cardRecommendedRaw).map((label, i) => ({
+                    label,
+                    data: cardRecommendedRaw[label].map((v, j) => (v / cardTotals[j] * 100).toFixed(1)),
+                    backgroundColor: cardColors[i],
+                    rawData: cardRecommendedRaw[label]
+                }))
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: { position: 'bottom', labels: { padding: 6, usePointStyle: true, font: { size: 8 } } },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => {
+                                const raw = ctx.dataset.rawData[ctx.dataIndex];
+                                return `${ctx.dataset.label}: ${raw.toLocaleString()} (${ctx.raw}%)`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { stacked: true, display: false, max: 100 },
+                    y: { stacked: true, grid: { display: false } }
                 }
             }
         });
