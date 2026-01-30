@@ -6,7 +6,7 @@ CMU Applied ML Project - Group 10: Rizaldy, Diyouva, Utami
 
 Behavioral clustering of 8,500 credit card customers to drive utilization growth. Churned customers excluded to focus on actionable strategies for the active portfolio.
 
-**Live Dashboard:** [View on GitHub Pages](https://rzrizaldy.github.io/cmu-credit-card-clustering/dashboard/)
+**Live Dashboard:** [View on GitHub Pages](https://rzrizaldy.github.io/cmu-credit-card-clustering/)
 
 ## Segments
 
@@ -28,7 +28,7 @@ Behavioral clustering of 8,500 credit card customers to drive utilization growth
 ```
 ├── applied_ml_creditcard_group10.ipynb   # Main analysis
 ├── cluster_data.csv                       # Segmented customer data
-├── dashboard/index.html                   # Interactive dashboard
+├── index.html                             # Interactive dashboard
 ├── credit_card_customers.csv              # Raw data
 └── analysis_report.md                     # Detailed findings
 ```
@@ -61,7 +61,7 @@ git push origin main
 
 3. Access dashboard at:
 ```
-https://<your-username>.github.io/<repo-name>/dashboard/
+https://<your-username>.github.io/<repo-name>/
 ```
 
 Note: GitHub Pages may take 1-2 minutes to deploy after enabling.
